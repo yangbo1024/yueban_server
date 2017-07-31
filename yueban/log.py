@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-日志系统: 采用文本存储，适用于：不重要，无需统计，用于调试，或者短时间之内的需求不定需求的查询
+Log functions
 """
 
 from . import communicate
@@ -9,8 +9,8 @@ from . import communicate
 
 def debug(*args):
     """
-    应用逻辑调试日志，不存盘
-    :param args: 每个参数须支持str转化
+    Only print to std(err)
+    :param args:
     :return:
     """
     s = " ".join([str(arg) for arg in args])
@@ -19,8 +19,8 @@ def debug(*args):
 
 async def log(*args):
     """
-    应用逻辑信息日志
-    :param args: 每个参数须支持str转化
+    Log to a single file use logging
+    :param args:
     :return:
     """
     if not args:
@@ -31,7 +31,7 @@ async def log(*args):
 
 async def stat(collection_name, documents):
     """
-    统计信息，存盘进入mongodb
+    Stats to MongoDB
     :param collection_name:
     :param documents:
     :return:

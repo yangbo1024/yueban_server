@@ -27,26 +27,19 @@ _clients = {}
 
 class Gate(object, metaclass=ABCMeta):
     """
-    网关对象
+    The base class of all gates
     """
     def __init__(self, gate_id):
         self.gate_id = gate_id
 
     @abstractmethod
     async def on_call(self, method, args):
-        """
-        当收到其它地方的调用的时候
-        路径为/call/method
-        :param method:
-        :param args:
-        :return:
-        """
         pass
 
 
 class Client(object):
     """
-    一个客户端的信息对象
+    A client object
     """
     def __init__(self, client_id, host, port, send_task, recv_task):
         self.client_id = client_id
@@ -67,11 +60,6 @@ def _add_client(client_id, host, port, send_task, recv_task):
 
 
 def remove_client(client_id):
-    """
-    移除某个客户端
-    :param client_id:
-    :return:
-    """
     client_obj = _clients.get(client_id)
     if not client_obj:
         return False
@@ -106,7 +94,7 @@ async def _send_routine(client_obj, ws):
     while 1:
         msg = await queue.get()
         if msg is None:
-            # 只有被移除的客户端才会放入None在队列中
+            # only in _remove_client can be None
             break
         ws.send_bytes(msg)
 
@@ -153,7 +141,7 @@ async def _yueban_handler(request):
     if path == 'proto':
         client_ids, proto_id, proto_body = data
         if not client_ids:
-            # 广播
+            # broadcast
             client_ids = _clients.keys()
         for client_id in client_ids:
             client_obj = _clients.get(client_id)

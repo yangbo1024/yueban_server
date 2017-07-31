@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-redis access
+Cache service: supply redis access
 """
 
 import aioredis

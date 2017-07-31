@@ -1,6 +1,5 @@
 """
-服务-日志收集:
-    对日志按类别进行存盘处理
+Service-collect log or stats:
 """
 
 import asyncio
@@ -17,7 +16,6 @@ from . import config
 from . import utility
 
 
-# 日志处理对象
 _logger = None
 _web_app = None
 _mongo_conn = None
@@ -25,7 +23,7 @@ _mongo_conn = None
 
 async def create_connection(host, port, database, user, password, replicaset=''):
     """
-    创建到mongo某个数据库的连接
+    Create connection to MongoDB
     :param host:
     :param port:
     :param database:
@@ -62,7 +60,7 @@ class Logger(object):
 
 class MultiProcessTimedRotatingFileHandler(TimedRotatingFileHandler):
     """
-    多进程可以并行写入的日志分隔处理器
+    MultiProcess with a same log-file
     """
     def doRollover(self):
         """

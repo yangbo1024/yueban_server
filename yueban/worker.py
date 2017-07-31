@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-服务-工作
+Service-worker
 """
 
 import asyncio
@@ -24,7 +24,7 @@ class Worker(object, metaclass=ABCMeta):
     @abstractmethod
     async def on_proto(self, client_id, proto_id, proto_body):
         """
-        客户端协议响应
+        Called when received a proto of a client
         :param client_id:
         :param proto_id:
         :param proto_body:
@@ -35,7 +35,7 @@ class Worker(object, metaclass=ABCMeta):
     @abstractmethod
     async def on_client_closed(self, client_id):
         """
-        某个客户端主动断开连接
+        Called when a client shut the connection
         :param client_id:
         :return:
         """
@@ -44,7 +44,7 @@ class Worker(object, metaclass=ABCMeta):
     @abstractmethod
     async def on_call(self, method, args):
         """
-        http调用响应
+        HTTP request
         :param method:
         :param args:
         :return:
@@ -57,12 +57,10 @@ async def _yueban_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
     if path == 'proto':
-        # 来自客户端的协议
         client_id, proto_id, proto_body = data
         await _worker_app.on_proto(client_id, proto_id, proto_body)
         return web.Response(body=b'')
     elif path == 'client_closed':
-        # 某个客户单断开连接
         client_id = data
         await _worker_app.on_client_closed(client_id)
         return web.Response(body=b'')
@@ -81,8 +79,8 @@ async def _call_handler(request):
 
 async def call_later(seconds, method, args):
     """
-    延时调用，定时器
-    :param seconds: 多久之后调用，支持小数
+    Call a method after some seconds with args
+    :param seconds: float or int
     :param method:
     :param args:
     :return:
@@ -96,7 +94,7 @@ async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
 
 async def unicast(gate_id, client_id, proto_id, proto_body):
     """
-    单播到某个网关
+    Send to one client
     :param gate_id:
     :param client_id:
     :param proto_id:
@@ -108,7 +106,7 @@ async def unicast(gate_id, client_id, proto_id, proto_body):
 
 async def multicast(gate_id, client_ids, proto_id, proto_body):
     """
-    多播到某个网关
+    Send to multiple clients
     :param gate_id:
     :param client_ids:
     :param proto_id:
@@ -120,7 +118,7 @@ async def multicast(gate_id, client_ids, proto_id, proto_body):
 
 async def broadcast(proto_id, proto_body):
     """
-    广播到所有网关
+    Send to all clients
     :param proto_id:
     :param proto_body:
     :return:
@@ -130,16 +128,18 @@ async def broadcast(proto_id, proto_body):
 
 async def close_clients(client_ids):
     """
-    踢掉某些客户端
+    Close some clients
     :param client_ids:
     :return:
     """
+    if not client_ids:
+        return
     return await communicate.post_all_gates('/yueban/close_client', client_ids)
 
 
 async def close_client(client_id):
     """
-    踢掉某个客户端
+    Close only 1 client
     :param client_id:
     :return:
     """

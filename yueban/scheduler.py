@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-时间调度服务
+Time based call-later scheduler
 """
 
 import asyncio

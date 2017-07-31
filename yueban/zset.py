@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-模拟redis-zset，提供正逆序排序，支持浮点和整数分数值
+Simulation of redis-zset with ASC|DESC order
 """
 
 import bisect
@@ -51,7 +51,7 @@ class _DescNode(object):
 
 class ZSet(object):
     """
-    模拟zset
+    zset
     """
     def __init__(self, asc=True):
         self.nodedict = {}

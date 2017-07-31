@@ -36,6 +36,8 @@ cfg = {
     'worker_url': 'http://127.0.0.1:12345',
     'logger_url': 'http://127.0.0.1:12346',
     'scheduler_url': 'http://127.0.0.1:12347',
+    'ums_url': 'http://127.0.0.1:12348',
+    'cms_url': 'http://127.0.0.1:12349',
 }
 """
 
@@ -94,3 +96,11 @@ def get_logger_url():
 
 def get_scheduler_url():
     return _config['scheduler_url']
+
+
+def get_ums_url():
+    return _config['ums_url']
+
+
+def get_cms_url():
+    return _config['cms_url']

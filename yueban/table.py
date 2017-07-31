@@ -1,8 +1,10 @@
 # -*- coding:utf-8 -*-
 
 """
-数据表处理: 采用csv格式
-每个csv格式为第1行为表头（列名），第2行开始为数据
+CSV table handling
+for each csv table:
+    1st line: column(index) names
+    2nd line~end: data rows
 """
 
 import json
@@ -12,7 +14,7 @@ _all_tables = {}
 
 def get_rows(table_data, index_name, index_value):
     """
-    查询所有符合条件的行数据
+    Get all rows by query
     :param table_data:
     :param index_name:
     :param index_value:
@@ -34,7 +36,7 @@ def get_rows(table_data, index_name, index_value):
 
 def get_row(table_data, index_name, index_value):
     """
-    查询满足条件的第一行数据
+    Get 1 row
     :param table_data:
     :param index_name:
     :param index_value:
@@ -55,7 +57,7 @@ def get_row(table_data, index_name, index_value):
 
 def get_cell(table_data, index_name, index_value, query_column):
     """
-    获取一个单元格数据
+    Get 1 cell
     :param table_data:
     :param index_name:
     :param index_value:
@@ -70,7 +72,7 @@ def get_cell(table_data, index_name, index_value, query_column):
 
 def get_int(table_data, index_name, index_value, query_column):
     """
-    以整数形式返回单元格数据
+    Get cell data as int
     :param table_data:
     :param index_name:
     :param index_value:

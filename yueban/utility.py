@@ -11,7 +11,6 @@ import pickle
 
 def simple_crypt(bs):
     """
-    简单的字节加密方案
     :param bs:
     :return:
     """
@@ -23,7 +22,6 @@ def simple_crypt(bs):
 
 def rc4(k, bs):
     """
-    RC4流加密,加密解密同一个接口
     :param k: password
     :param bs: the bytes to be encrypted
     :return:
@@ -61,7 +59,7 @@ def weight_rand(weights):
 
 def weight_rand_dict(weight_dic):
     """
-    根据字典中key值以及对应的随机权重随机选取一个key
+    Format: {k: weight}
     :param weight_dic:
     :return:
     """
@@ -73,7 +71,7 @@ def weight_rand_dict(weight_dic):
 
 def cmp_version(v1, v2):
     """
-    比较版本,版本格式为点分十进制,即xx.xx.xx
+    Version format: xx.xx.xx
     :param v1:
     :param v2:
     :return: v1<v2, -1;    v2==v2, 0;  v1>v2, 1
@@ -94,7 +92,7 @@ def cmp_version(v1, v2):
 
 def format_time(sec, day_str='天', hour_str='小时', minute_str='分', second_str='秒'):
     """
-    格式化（剩余）时间显示
+    Countdown-Left time format
     :param sec:
     :param day_str:
     :param hour_str:
@@ -123,25 +121,15 @@ def format_time(sec, day_str='天', hour_str='小时', minute_str='分', second_
 
 def gen_uniq_id():
     """
-    生成分布式-全局唯一ID
+    Universal id
     :return:
     """
     return str(uuid.uuid1())
 
 
 def dumps(obj):
-    """
-    通用的内部用的序列化函数
-    :param obj:
-    :return:
-    """
     return pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
 
 
 def loads(bs):
-    """
-    通用的内部用的反序列化函数
-    :param bs:
-    :return:
-    """
     return pickle.loads(bs)
