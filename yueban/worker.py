@@ -3,14 +3,12 @@
 Service-worker
 """
 
-import asyncio
-from . import cache
-from . import storage
 from aiohttp import web
 from . import utility
 from . import communicate
 from abc import ABCMeta
 from abc import abstractmethod
+import json
 
 
 _worker_app = None
@@ -21,7 +19,23 @@ class Worker(object, metaclass=ABCMeta):
     def __init__(self):
         pass
 
-    @abstractmethod
+    def make_empty_reply(self):
+        return web.Response(body=b'')
+
+    async def on_pickle_call(self, request, handler):
+        bs = await request.read()
+        data = utility.loads(bs)
+        ret = await handler(data)
+        bs = utility.dumps(ret)
+        return web.Response(body=bs)
+
+    async def on_json_call(self, request, handler):
+        bs = await request.read()
+        data = json.loads(bs)
+        ret = await handler(data)
+        bs = json.dumps(ret)
+        return web.Response(body=bs)
+
     async def on_proto(self, client_id, proto_id, proto_body):
         """
         Called when received a proto of a client
@@ -32,7 +46,6 @@ class Worker(object, metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
     async def on_client_closed(self, client_id):
         """
         Called when a client shut the connection
@@ -42,7 +55,7 @@ class Worker(object, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def on_call(self, method, args):
+    async def on_call(self, request):
         """
         HTTP request
         :param method:
@@ -69,12 +82,7 @@ async def _yueban_handler(request):
 
 
 async def _call_handler(request):
-    path = request.match_info['path']
-    bs = await request.read()
-    data = utility.loads(bs)
-    ret = await _worker_app.on_call(path, data)
-    bs = utility.dumps(ret)
-    return web.Response(body=bs)
+    return await _worker_app.on_call(request)
 
 
 async def call_later(seconds, method, args):
@@ -113,7 +121,22 @@ async def multicast(gate_id, client_ids, proto_id, proto_body):
     :param proto_body:
     :return:
     """
+    if not client_ids:
+        return
     await _send_to_gate(gate_id, client_ids, proto_id, proto_body)
+
+
+async def multicast_ex(client_ids, proto_id, proto_body):
+    """
+    Send to all gates of clients
+    :param client_ids:
+    :param proto_id:
+    :param proto_body:
+    :return:
+    """
+    if not client_ids:
+        return
+    await communicate.post_all_gates('/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def broadcast(proto_id, proto_body):
@@ -146,7 +169,7 @@ async def close_client(client_id):
     return await close_clients([client_id])
 
 
-def get_web_app():
+def get_app():
     return _web_app
 
 
@@ -156,9 +179,6 @@ def start(app):
     if not isinstance(app, Worker):
         raise TypeError("bad worker app")
     _worker_app = app
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(cache.initialize())
-    loop.run_until_complete(storage.initialize())
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
-    _web_app.router.add_post('/call/{path}', _call_handler)
+    _web_app.router.add_post('/call/{path:.*}', _call_handler)

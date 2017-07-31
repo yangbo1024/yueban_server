@@ -20,9 +20,9 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 
-_web_app = None
-_gate_app = None
-_clients = {}
+_web_app = globals().setdefault('_web_app')
+_gate_app = globals().setdefault('_gate_app')
+_clients = globals().setdefault('_clients', {})
 
 
 class Gate(object, metaclass=ABCMeta):

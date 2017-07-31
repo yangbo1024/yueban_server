@@ -8,6 +8,7 @@ import asyncio
 from aiohttp import web
 from . import utility
 from . import communicate
+from . import log
 
 
 _web_app = None
@@ -16,9 +17,9 @@ _web_app = None
 async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
-    seconds, method, args = msg
+    seconds, path, args = msg
+    log.debug()
     await asyncio.sleep(seconds)
-    path = '/call/{0}'.format(method)
     await communicate.post_worker(path, args)
 
 
