@@ -1,3 +1,3 @@
 yueban_server
 
-a light-weight python game server framework
+a light-weight python game server framework.
