@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 """
-框架名：月半
+name: 月半
 
-结构:
+dig:
          [...client1,client2...]
                     |
                     |
@@ -23,6 +23,9 @@
 """
 
 from . import config
+
+
+__version__ = '0.9.0'
 
 
 async def initialize(cfg):

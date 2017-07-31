@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-redis数据读写，用于保存逻辑状态等
+redis access
 """
 
 import aioredis

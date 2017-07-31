@@ -29,11 +29,11 @@ async def log(*args):
     await communicate.post_logger('log', s)
 
 
-async def stat(collection_name, document):
+async def stat(collection_name, documents):
     """
     统计信息，存盘进入mongodb
     :param collection_name:
-    :param document:
+    :param documents:
     :return:
     """
-    await communicate.post_logger('stat', [collection_name, document])
+    await communicate.post_logger('stat', [collection_name, documents])

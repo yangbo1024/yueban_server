@@ -1,0 +1,6 @@
+aiohttp
+aioredis
+filelock
+gunicorn
+lz4
+motor

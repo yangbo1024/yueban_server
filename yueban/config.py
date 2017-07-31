@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 
 """
-配置文件接口包装
-模板：
+template:
+
 cfg = {
     'cache_redis': {
         'host': '10.0.30.26',

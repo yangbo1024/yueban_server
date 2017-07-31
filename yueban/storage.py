@@ -10,7 +10,8 @@ from . import config
 
 
 # mongodb连接对象
-_mongo_conn = None
+_data_db_conn = None
+_stat_db_conn = None
 
 
 async def create_connection(host, port, database, user, password, replicaset=''):
@@ -30,11 +31,11 @@ async def create_connection(host, port, database, user, password, replicaset='')
     return db
 
 
-async def initialize():
+async def initialize_data():
     """
     :return:
     """
-    global _mongo_conn
+    global _data_db_conn
     cfg = config.get_data_mongo_config()
     host = cfg['host']
     port = cfg['port']
@@ -42,12 +43,29 @@ async def initialize():
     user = cfg['user']
     db = cfg['db']
     replicaset = cfg['replicaset']
-    _mongo_conn = await create_connection(host, port, db, user, password, replicaset)
+    _data_db_conn = await create_connection(host, port, db, user, password, replicaset)
 
 
-def get_mongo_conn():
+async def initialize_stat():
+    global _stat_db_conn
+    cfg = config.get_stat_mongo_config()
+    host = cfg['host']
+    port = cfg['port']
+    password = cfg['password']
+    user = cfg['user']
+    db = cfg['db']
+    replicaset = cfg['replicaset']
+    _stat_db_conn = await create_connection(host, port, db, user, password, replicaset)
+
+
+def get_data_conn():
     """
-    获取mongodb的连接
+    获取数据-mongodb的连接
     :return:
     """
-    return _mongo_conn
+    return _data_db_conn
+
+
+def get_stat_conn():
+    return _stat_db_conn
+

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-各服务之间的交互，通过http进行调用
+communications between services
 """
 
 import aiohttp

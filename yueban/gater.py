@@ -1,10 +1,10 @@
 # -*- coding:utf-8 -*-
 
 """
-服务-网关：
-    与客户端保持连接
-    收发数据，转发客户端协议
-    接受服务器推送到客户端
+service-gate functions:
+    1. keep connections with clients
+    2. handle client protocols
+    3. push to client
 """
 
 from aiohttp import web

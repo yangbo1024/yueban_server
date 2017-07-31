@@ -126,8 +126,8 @@ async def _yueban_handler(request):
         _logger.log(log_string)
         return web.Response(body=b'')
     elif path == 'stat':
-        collection_name, document = data
-        await _mongo_conn[collection_name].insert(document)
+        collection_name, documents = data
+        await _mongo_conn[collection_name].insert(documents)
         return web.Response(body=b'')
     else:
         return web.Response(body=b'')
