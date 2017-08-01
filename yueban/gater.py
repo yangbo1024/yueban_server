@@ -138,8 +138,12 @@ async def _yueban_handler(request):
         return web.Response(body=b'')
     elif path == 'yueban/get_online_cnt':
         cnt = len(_clients)
-        cnt_bs = utility.dumps(cnt)
-        return web.Response(body=cnt_bs)
+        info = {
+            'online': cnt,
+            'config': config.get_gate_config(_gate_id),
+        }
+        bs = utility.dumps(info)
+        return web.Response(body=bs)
     else:
         return web.Response(body=b'')
 
