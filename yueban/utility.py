@@ -7,6 +7,8 @@
 import random
 import uuid
 import pickle
+import json
+from aiohttp import web
 
 
 def simple_crypt(bs):
@@ -133,3 +135,27 @@ def dumps(obj):
 
 def loads(bs):
     return pickle.loads(bs)
+
+
+def make_empty_response():
+    return web.Response(body=b'')
+
+
+async def unpack_pickle_request(request):
+    bs = await request.read()
+    return pickle.loads(bs)
+
+
+def pack_pickle_response(data):
+    bs = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
+    return web.Response(body=bs)
+
+
+async def unpack_json_request(request):
+    bs = await request.read()
+    return json.loads(bs)
+
+
+def pack_json_response(data):
+    bs = json.dumps(data)
+    return web.Response(body=bs)

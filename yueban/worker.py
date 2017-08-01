@@ -42,6 +42,7 @@ class GameWorker(_BaseWorker):
         """
         pass
 
+    @abstractmethod
     async def on_client_closed(self, client_id):
         """
         Called when a client shut the connection
