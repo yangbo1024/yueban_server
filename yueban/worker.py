@@ -158,6 +158,14 @@ async def close_client(client_id):
     return await close_clients([client_id])
 
 
+async def get_gater_online_cnt(gate_id):
+    return await communicate.post_gate(gate_id, '/yueban/get_online_cnt', '')
+
+
+async def get_all_gater_online():
+    return await communicate.post_all_gates('/yueban/get_online_cnt', '')
+
+
 def get_app():
     return _web_app
 

@@ -20,7 +20,7 @@ def debug(*args):
     print(time_str, s)
 
 
-async def log(category, *args):
+async def _log(category, *args):
     """
     Log to a single file use logging
     :param args:
@@ -32,6 +32,18 @@ async def log(category, *args):
     arg_list.insert(0, category)
     s = " ".join(arg_list)
     await communicate.post_logger('log', s)
+
+
+async def info(*args):
+    await _log('INFO', *args)
+
+
+async def warning(*args):
+    await _log('WARNING', *args)
+
+
+async def error(*args):
+    await _log('ERROR', *args)
 
 
 async def stat(collection_name, documents):

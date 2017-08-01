@@ -139,6 +139,7 @@ async def _yueban_handler(request):
     elif path == 'yueban/get_online_cnt':
         cnt = len(_clients)
         info = {
+            'gate_id': _gate_id,
             'online': cnt,
             'config': config.get_gate_config(_gate_id),
         }

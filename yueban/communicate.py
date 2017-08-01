@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 
 """
-communications between services
+Communications between services
+should be used by yueban only
 """
 
 import aiohttp
