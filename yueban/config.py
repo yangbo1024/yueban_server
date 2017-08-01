@@ -33,7 +33,7 @@ cfg = {
             'url': 'http://127.0.0.1:10000',
         },
     },
-    'worker_url': 'http://127.0.0.1:12345',
+    'game_url': 'http://127.0.0.1:12345',
     'logger_url': 'http://127.0.0.1:12346',
     'scheduler_url': 'http://127.0.0.1:12347',
     'ums_url': 'http://127.0.0.1:12348',
@@ -83,16 +83,16 @@ def get_gate_url(gate_id):
     return gate_config['url']
 
 
-def get_worker_url():
-    return _config['worker_url']
-
-
 def get_logger_url():
     return _config['logger_url']
 
 
 def get_scheduler_url():
     return _config['scheduler_url']
+
+
+def get_game_url():
+    return _config['game_url']
 
 
 def get_ums_url():

@@ -18,13 +18,6 @@ async def post(url, args):
             return utility.loads(bs)
 
 
-async def post_worker(path, args):
-    base_url = config.get_worker_url()
-    url = '{0}/{1}'.format(base_url, path)
-    data = utility.dumps(args)
-    return await post(url, data)
-
-
 async def post_gate(gate_id, path, args):
     base_url = config.get_gate_url(gate_id)
     url = '{0}/{1}'.format(base_url, path)
@@ -48,6 +41,27 @@ async def post_logger(path, args):
 
 async def post_scheduler(path, args):
     base_url = config.get_scheduler_url()
+    url = '{0}/{1}'.format(base_url, path)
+    data = utility.dumps(args)
+    return await post(url, data)
+
+
+async def post_game(path, args):
+    base_url = config.get_game_url()
+    url = '{0}/{1}'.format(base_url, path)
+    data = utility.dumps(args)
+    return await post(url, data)
+
+
+async def post_ums(path, args):
+    base_url = config.get_ums_url()
+    url = '{0}/{1}'.format(base_url, path)
+    data = utility.dumps(args)
+    return await post(url, data)
+
+
+async def post_cms(path, args):
+    base_url = config.get_cms_url()
     url = '{0}/{1}'.format(base_url, path)
     data = utility.dumps(args)
     return await post(url, data)

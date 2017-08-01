@@ -16,27 +16,22 @@ _worker_app = None
 _web_app = None
 
 
-class Worker(object, metaclass=ABCMeta):
-    def __init__(self):
+class _BaseWorker(object, metaclass=ABCMeta):
+    @abstractmethod
+    async def on_call(self, request):
         pass
 
-    def make_empty_reply(self):
-        return web.Response(body=b'')
 
-    async def on_pickle_call(self, request, handler):
-        bs = await request.read()
-        data = utility.loads(bs)
-        ret = await handler(data)
-        bs = utility.dumps(ret)
-        return web.Response(body=bs)
+class UMSWorker(_BaseWorker):
+    pass
 
-    async def on_json_call(self, request, handler):
-        bs = await request.read()
-        data = json.loads(bs)
-        ret = await handler(data)
-        bs = json.dumps(ret)
-        return web.Response(body=bs)
 
+class CMSWorker(_BaseWorker):
+    pass
+
+
+class GameWorker(_BaseWorker):
+    @abstractmethod
     async def on_proto(self, client_id, proto_id, proto_body):
         """
         Called when received a proto of a client
@@ -55,26 +50,16 @@ class Worker(object, metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
-    async def on_call(self, request):
-        """
-        HTTP request
-        :param method:
-        :param args:
-        :return:
-        """
-        pass
-
 
 async def _yueban_handler(request):
-    path = request.match_info['path']
+    path = request.path
     bs = await request.read()
     data = utility.loads(bs)
-    if path == 'proto':
+    if path == '/yueban/proto':
         client_id, proto_id, proto_body = data
         await _worker_app.on_proto(client_id, proto_id, proto_body)
         return web.Response(body=b'')
-    elif path == 'client_closed':
+    elif path == '/yueban/client_closed':
         client_id = data
         await _worker_app.on_client_closed(client_id)
         return web.Response(body=b'')
@@ -179,8 +164,8 @@ def get_app():
 def start(app):
     global _worker_app
     global _web_app
-    if not isinstance(app, Worker):
-        raise TypeError("bad worker app")
+    if not isinstance(app, _BaseWorker):
+        raise TypeError("bad worker instance type")
     _worker_app = app
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
