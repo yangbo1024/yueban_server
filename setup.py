@@ -13,7 +13,7 @@ URL = "https://github.com/yangbo1024/yueban_server"
 VERSION = __import__("yueban").__version__
 CLASSIFIERS = [
     'License :: MIT License',
-    'Development Status :: Stable',
+    'Development Status :: Release',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',

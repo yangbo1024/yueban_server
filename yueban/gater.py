@@ -16,25 +16,11 @@ from . import log
 from . import utility
 from . import communicate
 from . import config
-from abc import ABCMeta
-from abc import abstractmethod
 
 
 _web_app = globals().setdefault('_web_app')
-_gate_app = globals().setdefault('_gate_app')
+_gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
-
-
-class Gate(object, metaclass=ABCMeta):
-    """
-    The base class of all gates
-    """
-    def __init__(self, gate_id):
-        self.gate_id = gate_id
-
-    @abstractmethod
-    async def on_call(self, method, args):
-        pass
 
 
 class Client(object):
@@ -48,10 +34,6 @@ class Client(object):
         self.send_task = send_task
         self.recv_task = recv_task
         self.send_queue = asyncio.Queue()
-
-
-def get_gate_app():
-    return _gate_app
 
 
 def _add_client(client_id, host, port, send_task, recv_task):
@@ -135,10 +117,10 @@ async def _websocket_handler(request):
 
 
 async def _yueban_handler(request):
-    path = request.match_info['path']
+    path = request.path
     bs = await request.read()
     data = utility.loads(bs)
-    if path == 'proto':
+    if path == '/yueban/proto':
         client_ids, proto_id, proto_body = data
         if not client_ids:
             # broadcast
@@ -149,35 +131,31 @@ async def _yueban_handler(request):
                 continue
             q = client_obj.send_queue
             q.put_nowait(_pack(proto_id, proto_body))
-    elif path == 'close_client':
+    elif path == '/yueban/close_client':
         client_ids = data
         for client_id in client_ids:
             remove_client(client_id)
         return web.Response(body=b'')
+    elif path == 'yueban/get_online_cnt':
+        cnt = len(_clients)
+        cnt_bs = utility.dumps(cnt)
+        return web.Response(body=cnt_bs)
     else:
         return web.Response(body=b'')
 
 
-async def _call_handler(request):
-    path = request.match_info['path']
-    bs = await request.read()
-    data = utility.loads(bs)
-    ret = await _gate_app.on_call(path, data)
-    bs = utility.dumps(ret)
-    return web.Response(body=bs)
+def get_gate_id():
+    return _gate_id
 
 
-def run(app):
-    if not isinstance(app, Gate):
-        raise TypeError("bad gate app")
+def run(gate_id):
     global _web_app
-    global _gate_app
-    _gate_app = app
-    cfg = config.get_gate_config(app.gate_id)
+    global _gate_id
+    _gate_id = gate_id
+    cfg = config.get_gate_config(gate_id)
     host = cfg['host']
     port = cfg['port']
     _web_app = web.Application()
     _web_app.router.add_get('/', _websocket_handler)
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
-    _web_app.router.add_post('/call/{path}', _call_handler)
     web.run_app(_web_app, host=host, port=port)

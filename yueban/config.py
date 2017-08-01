@@ -41,9 +41,6 @@ cfg = {
 }
 """
 
-import random
-
-
 _config = {}
 
 

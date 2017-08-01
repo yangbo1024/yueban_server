@@ -28,5 +28,5 @@ async def initialize():
     _redis_pool = await aioredis.create_pool((host, port), db=db, password=password)
 
 
-def get_redis_pool():
+def get_connection_pool():
     return _redis_pool

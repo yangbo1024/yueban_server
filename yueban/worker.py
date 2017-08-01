@@ -9,6 +9,7 @@ from . import communicate
 from abc import ABCMeta
 from abc import abstractmethod
 import json
+from . import config
 
 
 _worker_app = None
@@ -85,15 +86,17 @@ async def _call_handler(request):
     return await _worker_app.on_call(request)
 
 
-async def call_later(seconds, method, args):
+async def call_later(seconds, path, args):
     """
     Call a method after some seconds with args
     :param seconds: float or int
-    :param method:
+    :param path:
     :param args:
     :return:
     """
-    await communicate.post_scheduler('/yueban/schedule', [seconds, method, args])
+    url = config.get_worker_url()
+    url = '{0}{1}'.format(url, path)
+    await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
 
 
 async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
