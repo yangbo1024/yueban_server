@@ -22,6 +22,7 @@ dig:
 
 """
 
+import json
 from . import config
 
 
@@ -30,3 +31,10 @@ __version__ = '0.9.5'
 
 async def initialize(cfg):
     config.set_config(cfg)
+
+
+async def initialize_with_file(file_path='yueban.conf'):
+    with open(file_path) as f:
+        s = f.read()
+        cfg = json.loads(s)
+        config.set_config(cfg)
