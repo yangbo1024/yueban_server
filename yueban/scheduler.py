@@ -20,6 +20,7 @@ async def _schedule_handler(request):
     utility.print_out('schedule', seconds, url, args)
     await asyncio.sleep(seconds)
     await communicate.post(url, args)
+    return utility.pack_pickle_response('')
 
 
 def get_web_app():
