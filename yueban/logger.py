@@ -31,7 +31,7 @@ def ensure_logger(category, log_name='yueban.log'):
     handler.suffix = "%Y%m%d"
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
-    _loggers[category] = log_name
+    _loggers[category] = _logger
 
 
 def get_logger(category):
