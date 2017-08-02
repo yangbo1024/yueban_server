@@ -16,19 +16,20 @@ async def post(url, args):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=data) as resp:
             bs = await resp.read()
+            print('post', args, data, bs)
             return utility.loads(bs)
 
 
-async def post_gate(gate_id, path, args):
+async def post_gater(gate_id, path, args):
     base_url = config.get_gate_url(gate_id)
     url = '{0}/{1}'.format(base_url, path)
     data = utility.dumps(args)
     return await post(url, data)
 
 
-async def post_all_gates(path, args):
+async def post_all_gaters(path, args):
     gate_ids = config.get_all_gater_ids()
-    tasks = [post_gate(gate_id, path, args) for gate_id in gate_ids]
+    tasks = [post_gater(gate_id, path, args) for gate_id in gate_ids]
     results = await asyncio.gather(*tasks)
     return dict(zip(gate_ids, results))
 

@@ -72,21 +72,19 @@ async def _call_handler(request):
     return await _worker_app.on_call(request)
 
 
-async def call_later(seconds, path, args):
+async def call_later(seconds, url, args):
     """
     Call a method after some seconds with args
     :param seconds: float or int
-    :param path:
+    :param url:
     :param args:
     :return:
     """
-    url = config.get_worker_url()
-    url = '{0}{1}'.format(url, path)
     await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
 
 
 async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
-    await communicate.post_gate(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
+    await communicate.post_gater(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def unicast(gate_id, client_id, proto_id, proto_body):
@@ -125,7 +123,7 @@ async def multicast_ex(client_ids, proto_id, proto_body):
     """
     if not client_ids:
         return
-    await communicate.post_all_gates('/yueban/proto', [client_ids, proto_id, proto_body])
+    await communicate.post_all_gaters('/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def broadcast(proto_id, proto_body):
@@ -135,7 +133,7 @@ async def broadcast(proto_id, proto_body):
     :param proto_body:
     :return:
     """
-    await communicate.post_all_gates('/yueban/proto', [[], proto_id, proto_body])
+    await communicate.post_all_gaters('/yueban/proto', [[], proto_id, proto_body])
 
 
 async def close_clients(client_ids):
@@ -146,7 +144,7 @@ async def close_clients(client_ids):
     """
     if not client_ids:
         return
-    return await communicate.post_all_gates('/yueban/close_client', client_ids)
+    return await communicate.post_all_gaters('/yueban/close_client', client_ids)
 
 
 async def close_client(client_id):
@@ -159,11 +157,11 @@ async def close_client(client_id):
 
 
 async def get_gater_online_cnt(gate_id):
-    return await communicate.post_gate(gate_id, '/yueban/get_online_cnt', '')
+    return await communicate.post_gater(gate_id, '/yueban/get_online_cnt', '')
 
 
 async def get_all_gater_online():
-    return await communicate.post_all_gates('/yueban/get_online_cnt', '')
+    return await communicate.post_all_gaters('/yueban/get_online_cnt', '')
 
 
 def get_web_app():
