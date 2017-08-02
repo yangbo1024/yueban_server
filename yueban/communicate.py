@@ -12,6 +12,7 @@ from . import utility
 
 
 async def post(url, args):
+    print('post', url, args)
     data = utility.dumps(args)
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=data) as resp:

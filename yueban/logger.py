@@ -108,21 +108,21 @@ class MultiProcessTimedRotatingFileHandler(TimedRotatingFileHandler):
 
 
 async def _yueban_handler(request):
-    path = request.match_info['path']
+    path = request.path
     bs = await request.read()
     data = utility.loads(bs)
-    if path == 'log':
+    if path == '/yueban/log':
         category, log_string = data
         logger_obj = get_logger(category)
         logger_obj.log(log_string)
-        return web.Response(body=b'')
-    elif path == 'stat':
+        return utility.pack_pickle_response('')
+    elif path == '/yueban/stat':
         collection_name, documents = data
         conn = storage.get_stat_conn()
         await conn[collection_name].insert(documents)
-        return web.Response(body=b'')
+        return utility.pack_pickle_response('')
     else:
-        return web.Response(body=b'')
+        return utility.pack_pickle_response('')
 
 
 def get_web_app():

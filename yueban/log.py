@@ -31,7 +31,7 @@ async def _log(category, log_type, *args):
     arg_list = [str(arg) for arg in args]
     arg_list.insert(0, log_type)
     s = " ".join(arg_list)
-    await communicate.post_logger('log', [category, s])
+    await communicate.post_logger('/yueban/log', [category, s])
 
 
 async def info(category, *args):
@@ -53,4 +53,4 @@ async def stat(collection_name, documents):
     :param documents:
     :return:
     """
-    await communicate.post_logger('stat', [collection_name, documents])
+    await communicate.post_logger('/yueban/stat', [collection_name, documents])
