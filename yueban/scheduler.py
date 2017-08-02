@@ -13,13 +13,17 @@ from . import communicate
 _web_app = None
 
 
+async def _future(seconds, url, args):
+    await asyncio.sleep(seconds)
+    await communicate.post(url, args)
+
+
 async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, url, args = msg
     utility.print_out('schedule', seconds, url, args)
-    await asyncio.sleep(seconds)
-    await communicate.post(url, args)
+    asyncio.ensure_future(_future(seconds, url, args))
     return utility.pack_pickle_response('')
 
 
