@@ -11,13 +11,11 @@ import filelock
 import time
 from logging.handlers import TimedRotatingFileHandler
 from aiohttp import web
-from motor import motor_asyncio
-from . import config
 from . import utility
+from . import storage
 
 
 _web_app = None
-_mongo_conn = None
 _loggers = {}
 
 
@@ -40,33 +38,8 @@ def get_logger(category):
     return _loggers[category]
 
 
-async def create_connection(host, port, database, user, password, replicaset=''):
-    """
-    Create connection to MongoDB
-    :param host:
-    :param port:
-    :param database:
-    :param user:
-    :param password:
-    :param replicaset:
-    :return:
-    """
-    client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset)
-    db = client[database]
-    await db.authenticate(user, password)
-    return db
-
-
 async def initialize():
-    global _mongo_conn
-    cfg = config.get_stat_mongo_config()
-    host = cfg['host']
-    port = cfg['port']
-    password = cfg['password']
-    user = cfg['user']
-    db = cfg['db']
-    replicaset = cfg['replicaset']
-    _mongo_conn = await create_connection(host, port, db, user, password, replicaset)
+    await storage.initialize_stat()
 
 
 class Logger(object):
@@ -145,7 +118,8 @@ async def _yueban_handler(request):
         return web.Response(body=b'')
     elif path == 'stat':
         collection_name, documents = data
-        await _mongo_conn[collection_name].insert(documents)
+        conn = storage.get_stat_conn()
+        await conn[collection_name].insert(documents)
         return web.Response(body=b'')
     else:
         return web.Response(body=b'')
@@ -155,7 +129,7 @@ def get_web_app():
     return _web_app
 
 
-def start(log_name='yueban.log'):
+def start():
     global _logger
     global _web_app
     loop = asyncio.get_event_loop()
