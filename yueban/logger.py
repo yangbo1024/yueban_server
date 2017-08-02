@@ -26,7 +26,8 @@ def ensure_logger(category, log_name='yueban.log'):
     formatter = logging.Formatter("%(asctime)s %(message)s")
     if not os.path.exists(category):
         os.makedirs(category)
-    handler = MultiProcessTimedRotatingFileHandler(log_name, when="midnight")
+    path = os.path.join(category, log_name)
+    handler = MultiProcessTimedRotatingFileHandler(path, when="midnight")
     handler.suffix = "%Y%m%d"
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
@@ -115,6 +116,7 @@ async def _yueban_handler(request):
         category, log_string = data
         logger_obj = get_logger(category)
         logger_obj.info(log_string)
+        utility.print_out('log to file', category, log_string)
         return utility.pack_pickle_response('')
     elif path == '/yueban/stat':
         collection_name, documents = data
