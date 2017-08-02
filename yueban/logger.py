@@ -116,12 +116,11 @@ async def _yueban_handler(request):
         category, log_string = data
         logger_obj = get_logger(category)
         logger_obj.info(log_string)
-        utility.print_out('log to file', category, log_string)
         return utility.pack_pickle_response('')
     elif path == '/yueban/stat':
         collection_name, documents = data
         conn = storage.get_stat_conn()
-        await conn[collection_name].insert(documents)
+        await conn[collection_name].insert_many(documents)
         return utility.pack_pickle_response('')
     else:
         utility.print_out('bad_logger_handler', path, data)
