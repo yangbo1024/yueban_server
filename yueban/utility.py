@@ -137,10 +137,6 @@ def loads(bs):
     return pickle.loads(bs)
 
 
-def make_empty_response():
-    return web.Response(body=b'')
-
-
 async def unpack_pickle_request(request):
     bs = await request.read()
     return pickle.loads(bs)

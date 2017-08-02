@@ -136,7 +136,7 @@ async def _yueban_handler(request):
         client_ids = data
         for client_id in client_ids:
             remove_client(client_id)
-        return utility.make_empty_response()
+        return utility.pack_pickle_response('')
     elif path == '/yueban/get_online_cnt':
         cnt = len(_clients)
         info = {
@@ -147,7 +147,7 @@ async def _yueban_handler(request):
         bs = utility.dumps(info)
         return web.Response(body=bs)
     else:
-        return utility.make_empty_response()
+        return utility.pack_pickle_response('')
 
 
 def get_gate_id():
