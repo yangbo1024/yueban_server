@@ -16,7 +16,8 @@ async def post(url, args):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=data) as resp:
             bs = await resp.read()
-            print('post', args, data, bs)
+            if resp.status != 200:
+                raise RuntimeError(bs)
             return utility.loads(bs)
 
 
