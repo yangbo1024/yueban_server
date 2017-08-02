@@ -9,18 +9,23 @@ import aiohttp
 import asyncio
 from . import config
 from . import utility
+import traceback
+from . import log
 
 
 async def post(url, args):
     print('post', url, args)
-    data = utility.dumps(args)
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=data) as resp:
-            bs = await resp.read()
-            if resp.status != 200:
-                msg = 'post error:{0},{1},{2}'.format(url, args, bs)
-                raise RuntimeError(msg)
-            return utility.loads(bs)
+    try:
+        data = utility.dumps(args)
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=data) as resp:
+                bs = await resp.read()
+                if resp.status != 200:
+                    raise RuntimeError('{0}'.format(resp.status))
+                return utility.loads(bs)
+    except Exception as e:
+        utility.print('post error', url, args, e, traceback.format_exc())
+        return None
 
 
 async def post_gater(gate_id, path, args):

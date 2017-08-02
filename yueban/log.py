@@ -4,20 +4,7 @@
 Log functions
 """
 
-import datetime
 from . import communicate
-
-
-def debug(*args):
-    """
-    Only print to std(err)
-    :param args:
-    :return:
-    """
-    s = " ".join([str(arg) for arg in args])
-    now = datetime.datetime.now()
-    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')
-    print(time_str, s)
 
 
 async def _log(category, log_type, *args):

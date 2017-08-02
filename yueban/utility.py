@@ -9,6 +9,7 @@ import uuid
 import pickle
 import json
 from aiohttp import web
+import datetime
 
 
 def simple_crypt(bs):
@@ -155,3 +156,10 @@ async def unpack_json_request(request):
 def pack_json_response(data):
     bs = json.dumps(data)
     return web.Response(body=bs)
+
+
+def print(*args):
+    s = " ".join([str(arg) for arg in args])
+    now = datetime.datetime.now()
+    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')
+    print(time_str, s)
