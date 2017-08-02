@@ -114,7 +114,7 @@ async def _yueban_handler(request):
     if path == '/yueban/log':
         category, log_string = data
         logger_obj = get_logger(category)
-        logger_obj.log(log_string)
+        logger_obj.info(log_string)
         return utility.pack_pickle_response('')
     elif path == '/yueban/stat':
         collection_name, documents = data
