@@ -166,7 +166,7 @@ async def get_all_gater_online():
     return await communicate.post_all_gates('/yueban/get_online_cnt', '')
 
 
-def get_app():
+def get_web_app():
     return _web_app
 
 

@@ -16,9 +16,28 @@ from . import config
 from . import utility
 
 
-_logger = None
 _web_app = None
 _mongo_conn = None
+_loggers = {}
+
+
+def ensure_logger(category, log_name='yueban.log'):
+    global _loggers
+    _logger = logging.getLogger('')
+    _logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(message)s")
+    if not os.path.exists(category):
+        os.makedirs(category)
+    handler = MultiProcessTimedRotatingFileHandler(log_name, when="midnight")
+    handler.suffix = "%Y%m%d"
+    handler.setFormatter(formatter)
+    _logger.addHandler(handler)
+    _loggers[category] = log_name
+
+
+def get_logger(category):
+    ensure_logger(category)
+    return _loggers[category]
 
 
 async def create_connection(host, port, database, user, password, replicaset=''):
@@ -120,8 +139,9 @@ async def _yueban_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
     if path == 'log':
-        log_string = data
-        _logger.log(log_string)
+        category, log_string = data
+        logger_obj = get_logger(category)
+        logger_obj.log(log_string)
         return web.Response(body=b'')
     elif path == 'stat':
         collection_name, documents = data
@@ -138,16 +158,6 @@ def get_web_app():
 def start(log_name='yueban.log'):
     global _logger
     global _web_app
-    _logger = logging.getLogger('')
-    _logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s %(message)s")
-    dir_name = os.path.dirname(log_name)
-    if dir_name and not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    handler = MultiProcessTimedRotatingFileHandler(log_name, when="midnight")
-    handler.suffix = "%Y%m%d"
-    handler.setFormatter(formatter)
-    _logger.addHandler(handler)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(initialize())
     _web_app = web.Application()
