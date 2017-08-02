@@ -16,10 +16,10 @@ _web_app = None
 async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
-    seconds, path, args = msg
-    utility.print_out('schedule', seconds, path, args)
+    seconds, url, args = msg
+    utility.print_out('schedule', seconds, url, args)
     await asyncio.sleep(seconds)
-    await communicate.post_worker(path, args)
+    await communicate.post(url, args)
 
 
 def get_web_app():
