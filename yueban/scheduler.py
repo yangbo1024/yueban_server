@@ -17,7 +17,7 @@ async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, path, args = msg
-    utility.print('schedule', seconds, path, args)
+    utility.print_out('schedule', seconds, path, args)
     await asyncio.sleep(seconds)
     await communicate.post_worker(path, args)
 

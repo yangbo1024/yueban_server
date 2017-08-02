@@ -158,7 +158,7 @@ def pack_json_response(data):
     return web.Response(body=bs)
 
 
-def print(*args):
+def print_out(*args):
     s = " ".join([str(arg) for arg in args])
     now = datetime.datetime.now()
     time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')

@@ -24,7 +24,7 @@ async def post(url, args):
                     raise RuntimeError('{0}'.format(resp.status))
                 return utility.loads(bs)
     except Exception as e:
-        utility.print('post error', url, args, e, traceback.format_exc())
+        utility.print_out('post error', url, args, e, traceback.format_exc())
         return None
 
 

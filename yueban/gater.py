@@ -94,10 +94,10 @@ async def _recv_routine(client_id, ws):
         elif msg.type == web.WSMsgType.ERROR:
             remove_client(client_id)
             await communicate.post_worker('/yueban/client_closed', [client_id])
-            utility.print('msg error', client_id)
+            utility.print_out('msg error', client_id)
             break
         else:
-            utility.print("bad msg:", msg, msg.type)
+            utility.print_out("bad msg:", msg, msg.type)
 
 
 async def _websocket_handler(request):

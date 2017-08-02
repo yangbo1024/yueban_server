@@ -122,7 +122,7 @@ async def _yueban_handler(request):
         await conn[collection_name].insert(documents)
         return utility.pack_pickle_response('')
     else:
-        utility.print('bad_logger_handler', path, data)
+        utility.print_out('bad_logger_handler', path, data)
         return utility.pack_pickle_response('')
 
 
