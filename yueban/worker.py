@@ -72,17 +72,6 @@ async def _call_handler(request):
     return await _worker_app.on_call(request)
 
 
-async def call_later(seconds, url, args):
-    """
-    Call a method after some seconds with args
-    :param seconds: float or int
-    :param url:
-    :param args:
-    :return:
-    """
-    await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
-
-
 async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
     await communicate.post_gater(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
 
