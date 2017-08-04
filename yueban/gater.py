@@ -85,7 +85,7 @@ async def _recv_routine(client_id, client_host, ws):
         msg = await ws.receive()
         if msg.type == web.WSMsgType.BINARY:
             proto_id, proto_object = _unpack(msg.data)
-            await communicate.post_game('/yueban/proto', [_gate_id, client_host, client_id, proto_id, proto_object])
+            await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
         elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
             remove_client(client_id)
             await communicate.post_game('/yueban/client_closed', [client_id])
@@ -145,6 +145,18 @@ async def _yueban_handler(request):
             'config': config.get_gate_config(_gate_id),
         }
         bs = utility.dumps(info)
+        return web.Response(body=bs)
+    elif path == '/yueban/get_client_info':
+        client_ids = data
+        infos = {}
+        for client_id in client_ids:
+            client_obj = _clients.get(client_id)
+            if not client_obj:
+                continue
+            infos[client_id] = {
+                'host': client_obj.host,
+            }
+        bs = utility.dumps(infos)
         return web.Response(body=bs)
     else:
         return utility.pack_pickle_response('')

@@ -32,11 +32,10 @@ class CMSWorker(_BaseWorker):
 
 class GameWorker(_BaseWorker):
     @abstractmethod
-    async def on_proto(self, gate_id, client_host, client_id, proto_id, proto_body):
+    async def on_proto(self, gate_id, client_id, proto_id, proto_body):
         """
         Called when received a proto of a client
         :param gate_id:
-        :param client_host:
         :param client_id:
         :param proto_id:
         :param proto_body:
@@ -153,6 +152,14 @@ async def get_gater_online_cnt(gate_id):
 
 async def get_all_gater_online():
     return await communicate.post_all_gaters('/yueban/get_online_cnt', '')
+
+
+async def get_client_infos(gate_id, client_ids):
+    return await communicate.post_gater(gate_id, '/yueban/get_client_info', client_ids)
+
+
+async def get_all_client_infos(client_ids):
+    return await communicate.post_all_gaters('/yueban/get_client_info', client_ids)
 
 
 async def call_later(seconds, url, args):
