@@ -153,6 +153,35 @@ async def get_all_gater_online():
     return await communicate.post_all_gaters('/yueban/get_online_cnt', '')
 
 
+async def call_later(seconds, url, args):
+    """
+    Call a method after some seconds with args
+    :param seconds: float or int
+    :param url:
+    :param args:
+    :return:
+    """
+    return await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
+
+
+async def call_game_later(seconds, path, args):
+    game_url = config.get_game_url()
+    url = game_url + path
+    return await call_later(seconds, url, args)
+
+
+async def call_ums_later(seconds, path, args):
+    ums_url = config.get_ums_url()
+    url = ums_url + path
+    return await call_later(seconds, url, args)
+
+
+async def call_cms_later(seconds, path, args):
+    cms_url = config.get_cms_url()
+    url = cms_url + path
+    return await call_later(seconds, url, args)
+
+
 def get_web_app():
     return _web_app
 
