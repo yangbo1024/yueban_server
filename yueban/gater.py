@@ -12,7 +12,6 @@ import lz4.block as lz4block
 import json
 import struct
 import asyncio
-from . import log
 from . import utility
 from . import communicate
 from . import config
@@ -81,12 +80,12 @@ async def _send_routine(client_obj, ws):
         ws.send_bytes(msg)
 
 
-async def _recv_routine(client_id, ws):
+async def _recv_routine(client_id, client_host, ws):
     while 1:
         msg = await ws.receive()
         if msg.type == web.WSMsgType.BINARY:
             proto_id, proto_object = _unpack(msg.data)
-            await communicate.post_game('/yueban/proto', [client_id, proto_id, proto_object])
+            await communicate.post_game('/yueban/proto', [_gate_id, client_host, client_id, proto_id, proto_object])
         elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
             remove_client(client_id)
             await communicate.post_game('/yueban/client_closed', [client_id])
@@ -109,9 +108,10 @@ async def _websocket_handler(request):
         client_host, client_port = peer_name
     else:
         client_host, client_port = '', 0
-    send_task = asyncio.ensure_future(_send_routine(client_id, ws))
+    send_task = asyncio.ensure_future(_send_routine(client_id, client_host, ws))
     recv_task = asyncio.ensure_future(_recv_routine(client_id, ws))
     _add_client(client_id, client_host, client_port, send_task, recv_task)
+    utility.print_out('serve_client', client_id, client_host, client_port)
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
     return ws
 
@@ -120,7 +120,6 @@ async def _yueban_handler(request):
     path = request.path
     bs = await request.read()
     data = utility.loads(bs)
-    print('yueban_handler', path, data)
     if path == '/yueban/proto':
         client_ids, proto_id, proto_body = data
         if not client_ids:
@@ -132,6 +131,7 @@ async def _yueban_handler(request):
                 continue
             q = client_obj.send_queue
             q.put_nowait(_pack(proto_id, proto_body))
+        return utility.pack_pickle_response('')
     elif path == '/yueban/close_client':
         client_ids = data
         for client_id in client_ids:

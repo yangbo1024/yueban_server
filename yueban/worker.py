@@ -32,9 +32,11 @@ class CMSWorker(_BaseWorker):
 
 class GameWorker(_BaseWorker):
     @abstractmethod
-    async def on_proto(self, client_id, proto_id, proto_body):
+    async def on_proto(self, gate_id, client_host, client_id, proto_id, proto_body):
         """
         Called when received a proto of a client
+        :param gate_id:
+        :param client_host:
         :param client_id:
         :param proto_id:
         :param proto_body:
@@ -57,8 +59,8 @@ async def _yueban_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
     if path == '/yueban/proto':
-        client_id, proto_id, proto_body = data
-        await _worker_app.on_proto(client_id, proto_id, proto_body)
+        gate_id, client_host, client_id, proto_id, proto_body = data
+        await _worker_app.on_proto(gate_id, client_host, client_id, proto_id, proto_body)
         return web.Response(body=b'')
     elif path == '/yueban/client_closed':
         client_id = data

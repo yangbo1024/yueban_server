@@ -33,7 +33,7 @@ async def error(category, *args):
     await _log(category, 'ERROR', *args)
 
 
-async def stat(collection_name, documents):
+async def stat_many(collection_name, documents):
     """
     Stats to MongoDB
     :param collection_name:
@@ -41,3 +41,7 @@ async def stat(collection_name, documents):
     :return:
     """
     await communicate.post_logger('/yueban/stat', [collection_name, documents])
+
+
+async def stat(collection_name, document):
+    await communicate.post_logger('/yueban/stat', [collection_name, [document]])
