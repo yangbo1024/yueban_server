@@ -86,14 +86,14 @@ async def _recv_routine(client_id, ws):
         msg = await ws.receive()
         if msg.type == web.WSMsgType.BINARY:
             proto_id, proto_object = _unpack(msg.data)
-            await communicate.post_worker('/yueban/proto', [client_id, proto_id, proto_object])
+            await communicate.post_game('/yueban/proto', [client_id, proto_id, proto_object])
         elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
             remove_client(client_id)
-            await communicate.post_worker('/yueban/client_closed', [client_id])
+            await communicate.post_game('/yueban/client_closed', [client_id])
             break
         elif msg.type == web.WSMsgType.ERROR:
             remove_client(client_id)
-            await communicate.post_worker('/yueban/client_closed', [client_id])
+            await communicate.post_game('/yueban/client_closed', [client_id])
             utility.print_out('msg error', client_id)
             break
         else:

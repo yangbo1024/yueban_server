@@ -29,7 +29,7 @@ def rc4(k, bs):
     :param bs: the bytes to be encrypted
     :return:
     """
-    box = range(256)
+    box = list(range(256))
     j = 0
     klen = len(k)
     for i in range(256):
