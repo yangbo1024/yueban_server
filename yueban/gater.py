@@ -75,32 +75,38 @@ async def _send_routine(client_obj, ws):
     client_id = client_obj.client_id
     queue = client_obj.send_queue
     while 1:
-        msg = await queue.get()
-        if msg is None:
-            # only in _remove_client can be None
-            utility.print_out('send_queue_none', client_id)
-            break
-        ws.send_bytes(msg)
+        try:
+            msg = await queue.get()
+            if msg is None:
+                # only in _remove_client can be None
+                utility.print_out('send_queue_none', client_id)
+                break
+            ws.send_bytes(msg)
+        except Exception as e:
+            utility.print_out('send_routine_error', client_id, e)
 
 
 async def _recv_routine(client_obj, ws):
     client_id = client_obj.client_id
     while 1:
-        msg = await ws.receive()
-        if msg.type == web.WSMsgType.BINARY:
-            proto_id, proto_object = _unpack(msg.data)
-            await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
-        elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
-            remove_client(client_id)
-            await communicate.post_game('/yueban/client_closed', [client_id])
-            break
-        elif msg.type == web.WSMsgType.ERROR:
-            remove_client(client_id)
-            await communicate.post_game('/yueban/client_closed', [client_id])
-            utility.print_out('msg error', client_id)
-            break
-        else:
-            utility.print_out("bad msg:", msg, msg.type)
+        try:
+            msg = await ws.receive()
+            if msg.type == web.WSMsgType.BINARY:
+                proto_id, proto_object = _unpack(msg.data)
+                await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
+            elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
+                remove_client(client_id)
+                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
+                break
+            elif msg.type == web.WSMsgType.ERROR:
+                remove_client(client_id)
+                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
+                utility.print_out('msg error', client_id)
+                break
+            else:
+                utility.print_out("bad msg:", msg, msg.type)
+        except Exception as e:
+            utility.print_out('recv_routine_error', client_id, e)
 
 
 async def _websocket_handler(request):
