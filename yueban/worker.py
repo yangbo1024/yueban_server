@@ -64,7 +64,7 @@ class GameWorker(_BaseWorker):
         pass
 
     @abstractmethod
-    async def on_client_closed(self, client_id):
+    async def on_client_closed(self, gate_id, client_id):
         """
         Called when a client shut the connection
         :param client_id:
@@ -83,8 +83,8 @@ async def _yueban_handler(request):
         await _worker_app.on_proto(msg_obj)
         return web.Response(body=b'')
     elif path == '/yueban/client_closed':
-        client_id = data
-        await _worker_app.on_client_closed(client_id)
+        gate_id, client_id = data
+        await _worker_app.on_client_closed(gate_id, client_id)
         return web.Response(body=b'')
     else:
         return web.Response(body=b'')
