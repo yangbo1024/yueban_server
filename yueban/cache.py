@@ -35,10 +35,6 @@ def get_connection_pool():
     return _redis_pool
 
 
-async def get_connection():
-    return await _redis_pool.get_connection()
-
-
 class Lock(object):
     """
     !! Do not use as possible as you can

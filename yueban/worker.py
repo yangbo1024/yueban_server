@@ -16,6 +16,29 @@ _worker_app = None
 _web_app = None
 
 
+class ProtocolMessage(object):
+    __slots__ = ['gate_id', 'client_id', 'proto_id', 'proto_body']
+
+    def __init__(self, gate_id, client_id, proto_id, proto_body):
+        self.gate_id = gate_id
+        self.client_id = client_id
+        self.proto_id = proto_id
+        self.proto_body = proto_body
+
+    async def get_client_info(self):
+        """
+        Get information of the client
+        :return: {"host": ip_or_host, ...}
+        """
+        ret = await communicate.post_gater(self.gate_id, '/yueban/get_client_info', [self.client_id])
+        return ret
+
+    def __str__(self):
+        return 'ProtocolMessage(gate_id={0},client_id={1},proto_id={2},proto_body={3}'.format(
+            self.gate_id, self.client_id, self.proto_id, self.proto_body
+        )
+
+
 class _BaseWorker(object, metaclass=ABCMeta):
     @abstractmethod
     async def on_call(self, request):
@@ -32,13 +55,10 @@ class CMSWorker(_BaseWorker):
 
 class GameWorker(_BaseWorker):
     @abstractmethod
-    async def on_proto(self, gate_id, client_id, proto_id, proto_body):
+    async def on_proto(self, message):
         """
         Called when received a proto of a client
-        :param gate_id:
-        :param client_id:
-        :param proto_id:
-        :param proto_body:
+        :param message: A ProtocolMessage object
         :return:
         """
         pass
@@ -58,8 +78,9 @@ async def _yueban_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
     if path == '/yueban/proto':
-        gate_id, client_host, client_id, proto_id, proto_body = data
-        await _worker_app.on_proto(gate_id, client_host, client_id, proto_id, proto_body)
+        gate_id, client_id, proto_id, proto_body = data
+        msg_obj = ProtocolMessage(gate_id, client_id, proto_id, proto_body)
+        await _worker_app.on_proto(msg_obj)
         return web.Response(body=b'')
     elif path == '/yueban/client_closed':
         client_id = data
