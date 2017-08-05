@@ -122,6 +122,8 @@ async def multicast(gate_id, client_ids, proto_id, proto_body):
     """
     if not client_ids:
         return
+    if type(client_ids) not in (list, tuple, set):
+        raise TypeError('multicast client_ids type error')
     await _send_to_gate(gate_id, client_ids, proto_id, proto_body)
 
 
@@ -135,6 +137,8 @@ async def multicast_ex(client_ids, proto_id, proto_body):
     """
     if not client_ids:
         return
+    if type(client_ids) not in (list, tuple, set):
+        raise TypeError('multicast client_ids type error')
     await communicate.post_all_gaters('/yueban/proto', [client_ids, proto_id, proto_body])
 
 
