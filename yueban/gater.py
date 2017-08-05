@@ -71,8 +71,9 @@ def _unpack(proto_body):
     return proto_id, proto_object
 
 
-async def _send_routine(client_obj, ws, queue):
+async def _send_routine(client_obj, ws):
     client_id = client_obj.client_id
+    queue = client_obj.send_queue
     while 1:
         msg = await queue.get()
         if msg is None:
