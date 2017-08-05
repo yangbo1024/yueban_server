@@ -16,7 +16,7 @@ _redis_pool = None
 SYS_KEY_PREFIX = 'yueban'
 
 
-def make_key(fields):
+def make_key(*fields):
     return ':'.join(fields)
 
 
