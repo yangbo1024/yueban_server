@@ -26,18 +26,19 @@ class Client(object):
     """
     A client object
     """
-    def __init__(self, client_id, host, port, send_task, recv_task, send_queue):
+    def __init__(self, client_id, host, port):
         self.client_id = client_id
         self.host = host
         self.port = port
-        self.send_task = send_task
-        self.recv_task = recv_task
-        self.send_queue = send_queue
+        self.send_task = None
+        self.recv_task = None
+        self.send_queue = None
 
 
-def _add_client(client_id, host, port, send_task, recv_task):
-    client_obj = Client(client_id, host, port, send_task, recv_task)
+def _add_client(client_id, host, port):
+    client_obj = Client(client_id, host, port)
     _clients[client_id] = client_obj
+    return client_obj
 
 
 def remove_client(client_id):
@@ -70,7 +71,8 @@ def _unpack(proto_body):
     return proto_id, proto_object
 
 
-async def _send_routine(client_id, ws, queue):
+async def _send_routine(client_obj, ws, queue):
+    client_id = client_obj.client_id
     while 1:
         msg = await queue.get()
         if msg is None:
@@ -80,7 +82,8 @@ async def _send_routine(client_id, ws, queue):
         ws.send_bytes(msg)
 
 
-async def _recv_routine(client_id, ws):
+async def _recv_routine(client_obj, ws):
+    client_id = client_obj.client_id
     while 1:
         msg = await ws.receive()
         if msg.type == web.WSMsgType.BINARY:
@@ -108,10 +111,12 @@ async def _websocket_handler(request):
         client_host, client_port = peer_name
     else:
         client_host, client_port = '', 0
-    send_queue = asyncio.Queue()
-    send_task = asyncio.ensure_future(_send_routine(client_id, ws, send_queue))
-    recv_task = asyncio.ensure_future(_recv_routine(client_id, ws))
-    _add_client(client_id, client_host, client_port, send_task, recv_task, send_queue)
+    client_obj = _add_client(client_id, client_host, client_port)
+    client_obj.send_queue = asyncio.Queue()
+    send_task = asyncio.ensure_future(_send_routine(client_obj, ws))
+    recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
+    client_obj.send_task = send_task
+    client_obj.recv_task = recv_task
     utility.print_out('serve_client', client_id, client_host, client_port)
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
     return ws
