@@ -70,17 +70,17 @@ def _unpack(proto_body):
     return proto_id, proto_object
 
 
-async def _send_routine(client_obj, ws):
-    queue = client_obj.send_queue
+async def _send_routine(client_id, ws, queue):
     while 1:
         msg = await queue.get()
         if msg is None:
             # only in _remove_client can be None
+            utility.print_out('send_queue_none', client_id)
             break
         ws.send_bytes(msg)
 
 
-async def _recv_routine(client_id, client_host, ws):
+async def _recv_routine(client_id, ws):
     while 1:
         msg = await ws.receive()
         if msg.type == web.WSMsgType.BINARY:
