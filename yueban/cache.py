@@ -4,6 +4,7 @@
 Cache service: supply redis access
 """
 
+import asyncio
 import aioredis
 from . import config
 from . import utility
@@ -28,7 +29,7 @@ async def initialize():
     db = cfg['db']
     minsize = cfg['minsize']
     maxsize = cfg['maxsize']
-    _redis_pool = await aioredis.create_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize)
+    _redis_pool = await aioredis.create_redis_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize)
 
 
 def get_connection_pool():
@@ -47,41 +48,33 @@ class Lock(object):
                 do_some_thing()
                 print(lock.lock_id)
     """
-    LOCK_SCRIPT = """
-    redis.call('lpush', KEYS[1], KEYS[2])
-    local l = redis.call('llen', KEYS[1])
-    if (l <= 1)
-    then
-        return ''
-    else
-        return redis.call('lindex', KEYS[1], 1)
-    end
-    """
     UNLOCK_SCRIPT = """
-    local k = redis.call('rpop', KEYS[1])
-    local l = redis.call('llen', KEYS[1])
-    if (l <= 0)
-    then
-        return k
+    if redis.call("get", KEYS[1]) == ARGV[2] then
+        return redis.call("del", KEYS[1])
     else
-        redis.call('lpush', k, '')
-        return k
+        return 0
     end
     """
 
-    def __init__(self, lock_name, timeout=5):
+    def __init__(self, lock_name, timeout=3.0, interval=0.05):
         self.lock_key = make_key(SYS_KEY_PREFIX, lock_name)
         self.lock_id = utility.gen_uniq_id()
-        self.timeout = int(timeout)
+        self.timeout = max(0.02, timeout)
+        self.interval = max(0.002, interval)
 
     async def __aenter__(self):
-        waiting_key = await _redis_pool.execute('eval', self.LOCK_SCRIPT, 2, self.lock_key, self.lock_id)
-        if not waiting_key:
+        nx = _redis_pool.SET_IF_NOT_EXIST
+        p_timeout = int(self.timeout * 1000)
+        p_interval = int(self.interval * 1000)
+        p_sum_time = 0
+        while p_sum_time < p_timeout:
+            ok = await _redis_pool.set(self.lock_key, self.lock_id, pexpire=p_timeout, exist=nx)
+            if not ok:
+                await asyncio.sleep(self.interval)
+                p_sum_time += p_interval
+                continue
             return self
-        wait_ret = await _redis_pool.execute('brpop', waiting_key, self.timeout)
-        if not wait_ret:
-            return None
-        return self
+        return None
 
     async def __aexit__(self, exc_type, exc, tb):
-        await _redis_pool.execute('eval', self.UNLOCK_SCRIPT, 1, self.lock_key)
+        await _redis_pool.eval(self.UNLOCK_SCRIPT, keys=[self.lock_key], args=[self.lock_id])
