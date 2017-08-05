@@ -82,13 +82,13 @@ async def _yueban_handler(request):
         gate_id, client_id, proto_id, proto_body = data
         msg_obj = ProtocolMessage(gate_id, client_id, proto_id, proto_body)
         await _worker_app.on_proto(msg_obj)
-        return web.Response(body=b'')
+        return utility.pack_pickle_response('')
     elif path == '/yueban/client_closed':
         gate_id, client_id = data
         await _worker_app.on_client_closed(gate_id, client_id)
-        return web.Response(body=b'')
+        return utility.pack_pickle_response('')
     else:
-        return web.Response(body=b'')
+        return utility.pack_pickle_response('')
 
 
 async def _call_handler(request):
