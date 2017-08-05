@@ -29,8 +29,7 @@ async def post(url, args):
 async def post_gater(gate_id, path, args):
     base_url = config.get_gate_url(gate_id)
     url = '{0}{1}'.format(base_url, path)
-    data = utility.dumps(args)
-    return await post(url, data)
+    return await post(url, args)
 
 
 async def post_all_gaters(path, args):
