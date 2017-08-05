@@ -62,12 +62,15 @@ def _pack(proto_id, proto_object):
 
 def _unpack(proto_body):
     bs = lz4block.decompress(proto_body)
-    if len(bs) <= 4:
+    size = len(bs)
+    if size < 4:
         utility.print_out('bad_proto_body', proto_body, bs)
         return None
     id_bs = bs[:4]
-    body_bs = bs[4:]
     proto_id = struct.unpack('>i', id_bs)
+    if size == 4:
+        return proto_id, None
+    body_bs = bs[4:]
     js = body_bs.decode('utf8')
     proto_object = json.loads(js)
     return proto_id, proto_object
