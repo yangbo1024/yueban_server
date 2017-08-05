@@ -108,7 +108,7 @@ async def _websocket_handler(request):
         client_host, client_port = peer_name
     else:
         client_host, client_port = '', 0
-    send_task = asyncio.ensure_future(_send_routine(client_id, client_host, ws))
+    send_task = asyncio.ensure_future(_send_routine(client_id, ws))
     recv_task = asyncio.ensure_future(_recv_routine(client_id, ws))
     _add_client(client_id, client_host, client_port, send_task, recv_task)
     utility.print_out('serve_client', client_id, client_host, client_port)
