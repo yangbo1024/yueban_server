@@ -67,7 +67,7 @@ def _unpack(proto_body):
         utility.print_out('bad_proto_body', proto_body, bs)
         return None
     id_bs = bs[:4]
-    proto_id = struct.unpack('>i', id_bs)
+    proto_id = struct.unpack('>i', id_bs)[0]
     if size == 4:
         return proto_id, None
     body_bs = bs[4:]
