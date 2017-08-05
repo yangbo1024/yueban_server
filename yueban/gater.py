@@ -26,13 +26,13 @@ class Client(object):
     """
     A client object
     """
-    def __init__(self, client_id, host, port, send_task, recv_task):
+    def __init__(self, client_id, host, port, send_task, recv_task, send_queue):
         self.client_id = client_id
         self.host = host
         self.port = port
         self.send_task = send_task
         self.recv_task = recv_task
-        self.send_queue = asyncio.Queue()
+        self.send_queue = send_queue
 
 
 def _add_client(client_id, host, port, send_task, recv_task):
@@ -108,9 +108,10 @@ async def _websocket_handler(request):
         client_host, client_port = peer_name
     else:
         client_host, client_port = '', 0
-    send_task = asyncio.ensure_future(_send_routine(client_id, ws))
+    send_queue = asyncio.Queue()
+    send_task = asyncio.ensure_future(_send_routine(client_id, ws, send_queue))
     recv_task = asyncio.ensure_future(_recv_routine(client_id, ws))
-    _add_client(client_id, client_host, client_port, send_task, recv_task)
+    _add_client(client_id, client_host, client_port, send_task, recv_task, send_queue)
     utility.print_out('serve_client', client_id, client_host, client_port)
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
     return ws
