@@ -67,6 +67,7 @@ class GameWorker(_BaseWorker):
     async def on_client_closed(self, gate_id, client_id):
         """
         Called when a client shut the connection
+        :param gate_id:
         :param client_id:
         :return:
         """

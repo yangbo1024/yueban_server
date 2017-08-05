@@ -15,6 +15,7 @@ import asyncio
 from . import utility
 from . import communicate
 from . import config
+import traceback
 
 
 _web_app = globals().setdefault('_web_app')
@@ -83,7 +84,7 @@ async def _send_routine(client_obj, ws):
                 break
             ws.send_bytes(msg)
         except Exception as e:
-            utility.print_out('send_routine_error', client_id, e)
+            utility.print_out('send_routine_error', client_id, e, traceback.format_exc())
 
 
 async def _recv_routine(client_obj, ws):
@@ -106,7 +107,7 @@ async def _recv_routine(client_obj, ws):
             else:
                 utility.print_out("bad msg:", msg, msg.type)
         except Exception as e:
-            utility.print_out('recv_routine_error', client_id, e)
+            utility.print_out('recv_routine_error', client_id, e, traceback.format_exc())
 
 
 async def _websocket_handler(request):
