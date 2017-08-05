@@ -63,6 +63,7 @@ def _pack(proto_id, proto_object):
 def _unpack(proto_body):
     bs = lz4block.decompress(proto_body)
     if len(bs) <= 4:
+        utility.print_out('bad_proto_body', proto_body, bs)
         return None
     id_bs = bs[:4]
     body_bs = bs[4:]
