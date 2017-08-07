@@ -101,3 +101,7 @@ def get_ums_url():
 
 def get_cms_url():
     return _config['cms_url']
+
+
+def get_csv_dir():
+    return _config['csv_dir']
