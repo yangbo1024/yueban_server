@@ -18,6 +18,13 @@ _cached_mtimes = {}
 _cached_tables = {}
 
 
+def _get_table_path(table_name):
+    table_file_name = table_name if table_name.endswith('.csv') else table_name + '.csv'
+    csv_dir = config.get_csv_dir()
+    path = os.path.join(csv_dir, table_file_name)
+    return path
+
+
 def _load_table_data(path):
     with open(path) as f:
         data = f.read()
@@ -25,10 +32,16 @@ def _load_table_data(path):
         return table_data
 
 
+def update_table(table_name, table_data):
+    path = _get_table_path(table_name)
+    with open(path, 'w') as f:
+        s = json.dumps(table_data)
+        f.write(s)
+        utility.print_out('update_table', table_name, path, table_data)
+
+
 def get_newest_table_data(table_name):
-    table_file_name = table_name if table_name.endswith('.csv') else table_name + '.csv'
-    csv_dir = config.get_csv_dir()
-    path = os.path.join(csv_dir, table_file_name)
+    path = _load_table_data(table_name)
     try:
         stat_info = os.stat(path)
         old_time = _cached_mtimes.get(table_name, 0)
