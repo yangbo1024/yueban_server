@@ -19,7 +19,7 @@ _cached_tables = {}
 
 
 def _get_table_path(table_name):
-    table_file_name = table_name if table_name.endswith('.csv') else table_name + '.csv'
+    table_file_name = table_name + '.csv'
     csv_dir = config.get_csv_dir()
     path = os.path.join(csv_dir, table_file_name)
     return path
@@ -28,16 +28,14 @@ def _get_table_path(table_name):
 def _load_table_data(path):
     with open(path) as f:
         data = f.read()
-        table_data = json.loads(data)
-        return table_data
+        return data
 
 
-def update_table(table_name, table_data):
+def update_table(table_name, table_data_str):
     path = _get_table_path(table_name)
     with open(path, 'w') as f:
-        s = json.dumps(table_data)
-        f.write(s)
-        utility.print_out('update_table', table_name, path, table_data)
+        f.write(table_data_str)
+        utility.print_out('update_table', table_name, path, table_data_str)
 
 
 def get_newest_table_data(table_name):
@@ -60,6 +58,10 @@ def get_newest_table_data(table_name):
             return table_data
     except Exception as e:
         utility.print_out(e, traceback.format_exc())
+
+
+def get_table(table_name):
+    return get_newest_table_data(table_name)
 
 
 def get_rows(table_name, index_name, index_value):
@@ -125,24 +127,24 @@ def get_cell(table_name, index_name, index_value, query_column):
 
 def get_int(table_name, index_name, index_value, query_column):
     cell = get_cell(table_name, index_name, index_value, query_column)
-    return int(cell) if cell else 0
+    return int(cell) if cell else None
 
 
 def get_float(table_name, index_name, index_value, query_column):
     cell = get_cell(table_name, index_name, index_value, query_column)
-    return float(cell) if cell else 0
+    return float(cell) if cell else None
 
 
 def get_string(table_name, index_name, index_value, query_column):
     cell = get_cell(table_name, index_name, index_value, query_column)
-    return cell
+    return None if cell is None else cell
 
 
 def get_list(table_name, index_name, index_value, query_column):
     cell = get_cell(table_name, index_name, index_value, query_column)
-    return json.loads(cell) if cell else []
+    return json.loads(cell) if cell else None
 
 
 def get_dict(table_name, index_name, index_value, query_column):
     cell = get_cell(table_name, index_name, index_value, query_column)
-    return json.loads(cell) if cell else {}
+    return json.loads(cell) if cell else None
