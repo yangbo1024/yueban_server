@@ -45,24 +45,3 @@ async def error(category, *args):
 def error_async(category, *args):
     asyncio.ensure_future(error(category, *args))
 
-
-async def stat_many(collection_name, documents):
-    """
-    Stats to MongoDB
-    :param collection_name:
-    :param documents:
-    :return:
-    """
-    await communicate.post_logger('/yueban/stat', [collection_name, documents])
-
-
-def stat_many_async(collection_name, documents):
-    asyncio.ensure_future(stat_many(collection_name, documents))
-
-
-async def stat(collection_name, document):
-    await communicate.post_logger('/yueban/stat', [collection_name, [document]])
-
-
-def stat_async(collection_name, document):
-    asyncio.ensure_future(stat(collection_name, document))

@@ -1,8 +1,7 @@
 """
-Service-collect log or stats:
+Service-collect logs:
 """
 
-import asyncio
 import logging
 import logging.handlers
 import os
@@ -11,7 +10,6 @@ import time
 from logging.handlers import TimedRotatingFileHandler
 from aiohttp import web
 from . import utility
-from . import storage
 
 
 _web_app = None
@@ -36,10 +34,6 @@ def ensure_logger(category, log_name='yueban.log'):
 def get_logger(category):
     ensure_logger(category)
     return _loggers[category]
-
-
-async def initialize():
-    await storage.initialize_stat()
 
 
 class Logger(object):
@@ -107,11 +101,6 @@ async def _yueban_handler(request):
         logger_obj = get_logger(category)
         logger_obj.info(log_string)
         return utility.pack_pickle_response('')
-    elif path == '/yueban/stat':
-        collection_name, documents = data
-        conn = storage.get_stat_conn()
-        await conn[collection_name].insert_many(documents)
-        return utility.pack_pickle_response('')
     else:
         utility.print_out('bad_logger_handler', path, data)
         return utility.pack_pickle_response('')
@@ -122,9 +111,6 @@ def get_web_app():
 
 
 def start():
-    global _logger
     global _web_app
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(initialize())
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)

@@ -44,6 +44,10 @@ class _BaseWorker(object, metaclass=ABCMeta):
     async def on_call(self, request):
         pass
 
+    async def on_schedule(self, args):
+        s = '{0}:{1}'.format('Undesirable schedule', args)
+        raise RuntimeError(s)
+
 
 class UMSWorker(_BaseWorker):
     pass
@@ -86,6 +90,10 @@ async def _yueban_handler(request):
     elif path == '/yueban/client_closed':
         gate_id, client_id = data
         await _worker_app.on_client_closed(gate_id, client_id)
+        return utility.pack_pickle_response('')
+    elif path == '/yueban/on_schedule':
+        args = data
+        await _worker_app.on_schedule(args)
         return utility.pack_pickle_response('')
     else:
         return utility.pack_pickle_response('')
@@ -196,7 +204,7 @@ async def call_later(seconds, url, args):
     :param args:
     :return:
     """
-    return await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
+    return await communicate.post_scheduler('/yueban/on_schedule', [seconds, url, args])
 
 
 async def call_game_later(seconds, path, args):
