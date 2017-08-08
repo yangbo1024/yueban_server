@@ -16,7 +16,7 @@ _web_app = None
 _loggers = {}
 
 
-def ensure_logger(category, log_name='yueban.log'):
+def _ensure_logger(category, log_name='yueban.log'):
     global _loggers
     _logger = logging.getLogger('')
     _logger.setLevel(logging.DEBUG)
@@ -32,16 +32,8 @@ def ensure_logger(category, log_name='yueban.log'):
 
 
 def get_logger(category):
-    ensure_logger(category)
+    _ensure_logger(category)
     return _loggers[category]
-
-
-class Logger(object):
-    def __init__(self, log_name):
-        self.log_name = log_name
-
-    def on_message(self, msg_type, args):
-        pass
 
 
 class MultiProcessTimedRotatingFileHandler(TimedRotatingFileHandler):
