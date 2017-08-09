@@ -188,12 +188,20 @@ async def get_all_gater_online():
     return await communicate.post_all_gaters('/yueban/get_online_cnt', '')
 
 
-async def get_client_infos(gate_id, client_ids):
+async def get_client_infos_of_gater(gate_id, client_ids):
     return await communicate.post_gater(gate_id, '/yueban/get_client_info', client_ids)
 
 
 async def get_all_client_infos(client_ids):
     return await communicate.post_all_gaters('/yueban/get_client_info', client_ids)
+
+
+async def get_all_clients_of_gater(gate_id):
+    return await communicate.post_gater(gate_id, '/yueban/get_all_clients', [])
+
+
+async def get_clients_of_all_gaters():
+    return await communicate.post_all_gaters('/yueban/get_all_clients', [])
 
 
 async def call_later(seconds, url, args):
@@ -204,24 +212,24 @@ async def call_later(seconds, url, args):
     :param args:
     :return:
     """
-    return await communicate.post_scheduler('/yueban/on_schedule', [seconds, url, args])
+    return await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
 
 
-async def call_game_later(seconds, path, args):
+async def call_game_later(seconds, args):
     game_url = config.get_game_url()
-    url = game_url + path
+    url = game_url + '/yueban/on_schedule'
     return await call_later(seconds, url, args)
 
 
-async def call_ums_later(seconds, path, args):
+async def call_ums_later(seconds, args):
     ums_url = config.get_ums_url()
-    url = ums_url + path
+    url = ums_url + '/yueban/on_schedule'
     return await call_later(seconds, url, args)
 
 
-async def call_cms_later(seconds, path, args):
+async def call_cms_later(seconds, args):
     cms_url = config.get_cms_url()
-    url = cms_url + path
+    url = cms_url + '/yueban/on_schedule'
     return await call_later(seconds, url, args)
 
 

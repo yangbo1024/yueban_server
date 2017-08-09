@@ -16,6 +16,7 @@ from . import utility
 from . import communicate
 from . import config
 import traceback
+import time
 
 
 _web_app = globals().setdefault('_web_app')
@@ -34,6 +35,7 @@ class Client(object):
         self.send_task = None
         self.recv_task = None
         self.send_queue = None
+        self.create_time = int(time.time())
 
 
 def _add_client(client_id, host, port):
@@ -173,6 +175,17 @@ async def _yueban_handler(request):
                 continue
             infos[client_id] = {
                 'host': client_obj.host,
+            }
+        bs = utility.dumps(infos)
+        return web.Response(body=bs)
+    elif path == '/yueban/get_all_clients':
+        client_ids = _clients.keys()
+        infos = {}
+        for client_id in client_ids:
+            client_obj = _clients.get(client_id)
+            infos[client_id] = {
+                'host': client_obj.host,
+                'ctime': client_obj.create_time,
             }
         bs = utility.dumps(infos)
         return web.Response(body=bs)
