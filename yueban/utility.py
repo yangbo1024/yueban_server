@@ -47,7 +47,7 @@ def rc4(k, bs):
 
 def weight_rand(weights):
     """
-    :param weights:
+    :param weights: list or tuple
     :return:
     """
     sum_weight = sum(weights)
@@ -66,7 +66,7 @@ def weight_rand_dict(weight_dic):
     :param weight_dic:
     :return:
     """
-    keys = weight_dic.keys()
+    keys = list(weight_dic.keys())
     weights = [weight_dic[k] for k in keys]
     idx = weight_rand(weights)
     return keys[idx]
