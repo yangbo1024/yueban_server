@@ -55,6 +55,7 @@ cfg = {
 loop = asyncio.get_event_loop()
 loop.run_until_complete(yueban.initialize(cfg))
 
+
 class Worker(worker.GameWorker):
     async def on_call(self, request):
         print('on call', request.match_info)

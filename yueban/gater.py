@@ -17,6 +17,7 @@ from . import communicate
 from . import config
 import traceback
 import time
+import signal
 
 
 _web_app = globals().setdefault('_web_app')
@@ -136,6 +137,11 @@ async def _websocket_handler(request):
     return ws
 
 
+async def _future(seconds, url, args):
+    await asyncio.sleep(seconds)
+    await communicate.post(url, args)
+
+
 async def _yueban_handler(request):
     path = request.path
     bs = await request.read()
@@ -189,18 +195,48 @@ async def _yueban_handler(request):
             }
         bs = utility.dumps(infos)
         return web.Response(body=bs)
+    elif path == '/yueban/schedule':
+        bs = await request.read()
+        msg = utility.loads(bs)
+        seconds, url, args = msg
+        asyncio.ensure_future(_future(seconds, url, args))
+        return utility.pack_pickle_response('')
     else:
         return utility.pack_pickle_response('')
+
+
+async def _hotfix_handler():
+    import importlib
+    try:
+        importlib.invalidate_caches()
+        m = importlib.load_module('hotfix')
+        importlib.reload(m)
+        result = m.run()
+    except Exception as e:
+        import traceback
+        result = [e, traceback.format_exc()]
+    result = str(result)
+    utility.print_out('hotfix', result)
+    return utility.pack_json_response(result)
 
 
 def get_gate_id():
     return _gate_id
 
 
+def set_gate_id(gate_id):
+    global _gate_id
+    _gate_id = gate_id
+
+
 def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
+    # signal
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
+    # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']
     port = cfg['port']

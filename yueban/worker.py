@@ -8,7 +8,6 @@ from . import utility
 from . import communicate
 from abc import ABCMeta
 from abc import abstractmethod
-import json
 from . import config
 
 
