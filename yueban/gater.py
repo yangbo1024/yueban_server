@@ -205,7 +205,7 @@ async def _yueban_handler(request):
         return utility.pack_pickle_response('')
 
 
-async def _hotfix_handler():
+def _hotfix_handler():
     import importlib
     try:
         importlib.invalidate_caches()
@@ -217,7 +217,6 @@ async def _hotfix_handler():
         result = [e, traceback.format_exc()]
     result = str(result)
     utility.print_out('hotfix', result)
-    return utility.pack_json_response(result)
 
 
 def get_gate_id():
