@@ -3,41 +3,45 @@
 """
 template:
 
-cfg = {
-    'cache_redis': {
-        'host': '10.0.30.26',
-        'port': 20100,
-        'password': 'yj123456789.',
-        'db': 0,
+{
+    "cache_redis": {
+        "host": "10.0.30.26",
+        "port": 20100,
+        "password": "yj123456789.",
+        "db": 0,
+        "minsize": 1,
+        "maxsize": 2
     },
-    'data_mongodb': {
-        'host': '10.0.30.26',
-        'port': 20031,
-        'password': 'yj123456789.',
-        'user': 'game_yydz_mongodb',
-        'db': 'game_yydz',
-        'replicaset': '',
+    "data_mongodb": {
+        "host": "10.0.30.26",
+        "port": 20031,
+        "password": "yj123456789.",
+        "user": "game_yydz_mongodb",
+        "db": "game_yydz",
+        "replicaset": ""
     },
-    'stat_mongodb': {
-        'host': '127.0.0.1',
-        'port': 6379,
-        'user': 'abc',
-        'password': 'abcdef',
-        'db': 'data',
-        'replicaset': '',
+    "stat_mongodb": {
+        "host": "10.0.30.26",
+        "port": 20031,
+        "password": "yj123456789.",
+        "user": "game_yydz_mongodb",
+        "db": "game_yydz",
+        "replicaset": ""
     },
-    'gaters': {
-        'huanan_1': {
-            'host': '127.0.0.1',
-            'port': 10000,
-            'url': 'http://127.0.0.1:10000',
-        },
+    "gaters": {
+        "huanan_1": {
+            "host": "10.0.30.26",
+            "port": 13100,
+            "url": "http://10.0.30.26:13100",
+            "ws_url": "ws://10.0.30.26:13100/"
+        }
     },
-    'game_url': 'http://127.0.0.1:12345',
-    'logger_url': 'http://127.0.0.1:12346',
-    'scheduler_url': 'http://127.0.0.1:12347',
-    'ums_url': 'http://127.0.0.1:12348',
-    'cms_url': 'http://127.0.0.1:12349',
+    "logger_url": "http://10.0.30.26:13000",
+    "scheduler_url": "http://10.0.30.26:13010",
+    "game_url": "http://10.0.30.26:13020",
+    "ums_url": "http://10.0.30.26:13030",
+    "cms_url": "http://10.0.30.26:13040",
+    "csv_dir": "csv_table"
 }
 """
 
