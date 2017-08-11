@@ -54,5 +54,8 @@ def start(output=True):
     _output_schedule = output
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/schedule', _schedule_handler)
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
+    try:
+        loop = asyncio.get_event_loop()
+        loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
+    except NotImplementedError:
+        pass

@@ -233,8 +233,11 @@ def run(gate_id):
     global _gate_id
     _gate_id = gate_id
     # signal
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
+    try:
+        loop = asyncio.get_event_loop()
+        loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
+    except NotImplementedError:
+        pass
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']

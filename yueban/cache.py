@@ -55,8 +55,6 @@ class Lock(object):
         return 0
     end
     """
-    # key expire time in milliseconds
-    P_EXPIRE = 1500
 
     def __init__(self, lock_name, timeout=3.0, interval=0.05):
         self.lock_key = make_key(SYS_KEY_PREFIX, lock_name)
@@ -70,7 +68,7 @@ class Lock(object):
         p_interval = int(self.interval * 1000)
         p_sum_time = 0
         while p_sum_time < p_timeout:
-            ok = await _redis_pool.set(self.lock_key, self.lock_id, pexpire=self.P_EXPIRE, exist=nx)
+            ok = await _redis_pool.set(self.lock_key, self.lock_id, pexpire=p_interval, exist=nx)
             if not ok:
                 await asyncio.sleep(self.interval)
                 p_sum_time += p_interval
