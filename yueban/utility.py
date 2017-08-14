@@ -166,14 +166,14 @@ def print_out(*args):
     print(time_str, s)
 
 
-async def lock(lock_name, timeout=2.0):
+async def lock(lock_name, timeout=2.0, interval=0.01):
     """
     add a lock
     :param lock_name: Do not use special characters except '_'
     :param timeout:
     :return:
     """
-    ret = await communicate.post_scheduler('/yueban/lock', [lock_name, timeout])
+    ret = await communicate.post_scheduler('/yueban/lock', [lock_name, timeout, interval])
     return bool(ret)
 
 

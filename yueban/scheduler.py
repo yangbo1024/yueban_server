@@ -37,7 +37,8 @@ async def _schedule_handler(request):
 async def _lock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
-    lock_name, timeout = msg
+    lock_name, timeout, interval = msg
+    interval = max(interval, 0.0001)
     begin = time.time()
     while 1:
         if time.time() - begin >= timeout:
@@ -49,7 +50,7 @@ async def _lock_handler(request):
                 with open(lock_name, 'w'):
                     pass
         if not ok:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(interval)
         else:
             return utility.pack_pickle_response(0)
 
