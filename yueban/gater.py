@@ -137,75 +137,78 @@ async def _websocket_handler(request):
     return ws
 
 
-async def _future(seconds, url, args):
-    await asyncio.sleep(seconds)
-    await communicate.post(url, args)
-
-
-async def _yueban_handler(request):
-    path = request.path
+async def _proto_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
-    if path == '/yueban/proto':
-        client_ids, proto_id, proto_body = data
-        if not client_ids:
-            # broadcast
-            client_ids = _clients.keys()
-        for client_id in client_ids:
-            client_obj = _clients.get(client_id)
-            if not client_obj:
-                continue
-            q = client_obj.send_queue
-            q.put_nowait(_pack(proto_id, proto_body))
-        return utility.pack_pickle_response('')
-    elif path == '/yueban/close_client':
-        client_ids = data
-        for client_id in client_ids:
-            remove_client(client_id)
-        return utility.pack_pickle_response('')
-    elif path == '/yueban/get_online_cnt':
-        cnt = len(_clients)
-        info = {
-            'gate_id': _gate_id,
-            'online': cnt,
-            'config': config.get_gate_config(_gate_id),
-        }
-        bs = utility.dumps(info)
-        return web.Response(body=bs)
-    elif path == '/yueban/get_client_info':
-        client_ids = data
-        infos = {}
-        for client_id in client_ids:
-            client_obj = _clients.get(client_id)
-            if not client_obj:
-                continue
-            infos[client_id] = {
-                'host': client_obj.host,
-            }
-        bs = utility.dumps(infos)
-        return web.Response(body=bs)
-    elif path == '/yueban/get_all_clients':
+    client_ids, proto_id, proto_body = data
+    if not client_ids:
+        # broadcast
         client_ids = _clients.keys()
-        infos = {}
-        for client_id in client_ids:
-            client_obj = _clients.get(client_id)
-            infos[client_id] = {
-                'host': client_obj.host,
-                'ctime': client_obj.create_time,
-            }
-        bs = utility.dumps(infos)
-        return web.Response(body=bs)
-    elif path == '/yueban/schedule':
-        bs = await request.read()
-        msg = utility.loads(bs)
-        seconds, url, args = msg
-        asyncio.ensure_future(_future(seconds, url, args))
-        return utility.pack_pickle_response('')
-    else:
-        return utility.pack_pickle_response('')
+    for client_id in client_ids:
+        client_obj = _clients.get(client_id)
+        if not client_obj:
+            continue
+        q = client_obj.send_queue
+        q.put_nowait(_pack(proto_id, proto_body))
+    return utility.pack_pickle_response('')
 
 
-def _hotfix_handler():
+async def _close_client_handler(request):
+    bs = await request.read()
+    data = utility.loads(bs)
+    client_ids = data
+    for client_id in client_ids:
+        remove_client(client_id)
+    return utility.pack_pickle_response('')
+
+
+async def _get_online_cnt_handler(request):
+    cnt = len(_clients)
+    info = {
+        'gate_id': _gate_id,
+        'online': cnt,
+        'config': config.get_gate_config(_gate_id),
+    }
+    bs = utility.dumps(info)
+    return web.Response(body=bs)
+
+
+async def _get_client_info_handler(request):
+    bs = await request.read()
+    data = utility.loads(bs)
+    client_ids = data
+    infos = {}
+    for client_id in client_ids:
+        client_obj = _clients.get(client_id)
+        if not client_obj:
+            continue
+        infos[client_id] = {
+            'host': client_obj.host,
+        }
+    bs = utility.dumps(infos)
+    return web.Response(body=bs)
+
+
+async def _get_all_clients_handler(request):
+    bs = await request.read()
+    data = utility.loads(bs)
+    client_ids = _clients.keys()
+    infos = {}
+    for client_id in client_ids:
+        client_obj = _clients.get(client_id)
+        infos[client_id] = {
+            'host': client_obj.host,
+            'ctime': client_obj.create_time,
+        }
+    bs = utility.dumps(infos)
+    return web.Response(body=bs)
+
+
+async def _hotfix_handler(request):
+    bs = await request.read()
+    msg = utility.loads(bs)
+    if msg != config.get_hotfix_password():
+        return utility.pack_pickle_response('bad password')
     import importlib
     try:
         importlib.invalidate_caches()
@@ -217,6 +220,7 @@ def _hotfix_handler():
         result = [e, traceback.format_exc()]
     result = str(result)
     utility.print_out('hotfix', result)
+    return utility.pack_pickle_response(result)
 
 
 def get_gate_id():
@@ -232,17 +236,16 @@ def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
-    # signal
-    try:
-        loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
-    except NotImplementedError:
-        pass
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']
     port = cfg['port']
     _web_app = web.Application()
     _web_app.router.add_get('/', _websocket_handler)
-    _web_app.router.add_post('/yueban/{path}', _yueban_handler)
+    _web_app.router.add_post('/yueban/proto', _proto_handler)
+    _web_app.router.add_post('/yueban/close_client', _close_client_handler)
+    _web_app.router.add_post('/yueban/get_online_cnt', _get_online_cnt_handler)
+    _web_app.router.add_post('/yueban/get_client_info', _get_client_info_handler)
+    _web_app.router.add_post('/yueban/get_all_clients', _get_all_clients_handler)
+    _web_app.router.add_post('/yueban/hotfix', _hotfix_handler)
     web.run_app(_web_app, host=host, port=port)

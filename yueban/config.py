@@ -109,3 +109,7 @@ def get_cms_url():
 
 def get_csv_dir():
     return _config['csv_dir']
+
+
+def get_hotfix_password():
+    return _config['hotfix_password']

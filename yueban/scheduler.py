@@ -8,11 +8,15 @@ import asyncio
 from aiohttp import web
 from . import utility
 from . import communicate
-import signal
+import filelock
+import os.path
+import time
+from . import config
 
 
 _web_app = None
 _output_schedule = True
+_locker = filelock.FileLock('yueban_lock')
 
 
 async def _future(seconds, url, args):
@@ -30,7 +34,45 @@ async def _schedule_handler(request):
     return utility.pack_pickle_response('')
 
 
-def _hotfix_handler():
+async def _lock_handler(request):
+    bs = await request.read()
+    msg = utility.loads(bs)
+    lock_name, timeout = msg
+    begin = time.time()
+    while 1:
+        if time.time() - begin >= timeout:
+            return utility.pack_pickle_response(1)
+        ok = False
+        with _locker.acquire(timeout=timeout):
+            if not os.path.exists(lock_name):
+                ok = True
+                with open(lock_name, 'w'):
+                    pass
+        if not ok:
+            await asyncio.sleep(0.01)
+        else:
+            return utility.pack_pickle_response(0)
+
+
+async def _unlock_handler(request):
+    bs = await request.read()
+    msg = utility.loads(bs)
+    lock_name = msg[0]
+    with _locker.acquire():
+        try:
+            os.remove(lock_name)
+            ok = True
+        except Exception as e:
+            utility.print_out(e)
+            ok = False
+    return utility.pack_pickle_response(ok)
+
+
+async def _hotfix_handler(request):
+    bs = await request.read()
+    msg = utility.loads(bs)
+    if msg != config.get_hotfix_password():
+        return utility.pack_pickle_response('bad password')
     import importlib
     try:
         importlib.invalidate_caches()
@@ -42,6 +84,7 @@ def _hotfix_handler():
         result = [e, traceback.format_exc()]
     result = str(result)
     utility.print_out('hotfix', result)
+    return utility.pack_pickle_response(result)
 
 
 def get_web_app():
@@ -54,8 +97,6 @@ def start(output=True):
     _output_schedule = output
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/schedule', _schedule_handler)
-    try:
-        loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGILL, _hotfix_handler)
-    except NotImplementedError:
-        pass
+    _web_app.router.add_post('/yueban/lock', _lock_handler)
+    _web_app.router.add_post('/yueban/unkock', _unlock_handler)
+    _web_app.router.add_post('/yueban/hotfix', _hotfix_handler)
