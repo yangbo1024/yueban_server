@@ -171,6 +171,7 @@ async def lock(lock_name, timeout=2.0, interval=0.01):
     add a lock
     :param lock_name: Do not use special characters except '_'
     :param timeout:
+    :param interval:
     :return:
     """
     ret = await communicate.post_scheduler('/yueban/lock', [lock_name, timeout, interval])
@@ -178,4 +179,32 @@ async def lock(lock_name, timeout=2.0, interval=0.01):
 
 
 async def unlock(lock_name):
+    """
+    release a lock
+    :param lock_name:
+    :return:
+    """
     return await communicate.post_scheduler('/yueban/unlock', [lock_name])
+
+
+class Lock(object):
+    """
+    lock for with stmt
+    usage:
+        async with Lock(lock_name) as lock:
+            if lock is None:
+                print('get lock failed')
+            else:
+                print('do some work')
+    """
+    def __init__(self, lock_name, timeout=2.0, interval=0.01):
+        self.lock_name = lock_name
+        self.timeout = timeout
+        self.interval = interval
+
+    async def __aenter__(self):
+        ret = await lock(self.lock_name, self.timeout, self.interval)
+        return self if ret else None
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await unlock(self.lock_name)
