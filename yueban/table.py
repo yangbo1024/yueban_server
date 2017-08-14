@@ -38,7 +38,7 @@ def update_table(table_name, table_data_str):
         utility.print_out('update_table', table_name, path, table_data_str)
 
 
-def get_newest_table_data(table_name):
+def _get_newest_table_data(table_name):
     path = _load_table_data(table_name)
     try:
         stat_info = os.stat(path)
@@ -61,7 +61,7 @@ def get_newest_table_data(table_name):
 
 
 def get_table(table_name):
-    return get_newest_table_data(table_name)
+    return _get_newest_table_data(table_name)
 
 
 def get_rows(table_name, index_name, index_value):
@@ -72,7 +72,7 @@ def get_rows(table_name, index_name, index_value):
     :param index_value:
     :return:
     """
-    table_data = get_newest_table_data(table_name)
+    table_data = _get_newest_table_data(table_name)
     if not table_data:
         return None
     headers = table_data[0]
@@ -95,7 +95,7 @@ def get_row(table_name, index_name, index_value):
     :param index_value:
     :return:
     """
-    table_data = get_newest_table_data(table_name)
+    table_data = _get_newest_table_data(table_name)
     if not table_data:
         return None
     headers = table_data[0]
@@ -118,7 +118,7 @@ def get_cell(table_name, index_name, index_value, query_column):
     :param query_column:
     :return:
     """
-    table_data = get_newest_table_data(table_name)
+    table_data = _get_newest_table_data(table_name)
     row_map = get_row(table_data, index_name, index_value)
     if not row_map:
         return None

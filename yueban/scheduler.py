@@ -14,6 +14,9 @@ import time
 from . import config
 
 
+LOCK_FILE_DIR = 'locks'
+
+
 _web_app = None
 _output_schedule = True
 _locker = filelock.FileLock('yueban_lock')
@@ -38,7 +41,7 @@ async def _lock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name, timeout, interval = msg
-    lock_path = os.path.join('locks', lock_name)
+    lock_path = os.path.join('LOCK_FILE_DIR', lock_name)
     interval = max(interval, 0.0001)
     begin = time.time()
     while 1:
@@ -60,7 +63,7 @@ async def _unlock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
-    lock_path = os.path.join('locks', lock_name)
+    lock_path = os.path.join('LOCK_FILE_DIR', lock_name)
     with _locker.acquire():
         try:
             os.remove(lock_path)
@@ -99,6 +102,8 @@ def start(output=True):
     global _web_app
     global _output_schedule
     _output_schedule = output
+    if not os.path.exists('LOCK_FILE_DIR'):
+        os.makedirs('LOCK_FILE_DIR')
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/schedule', _schedule_handler)
     _web_app.router.add_post('/yueban/lock', _lock_handler)
