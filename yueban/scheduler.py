@@ -38,6 +38,7 @@ async def _lock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name, timeout, interval = msg
+    lock_path = os.path.join('locks', lock_name)
     interval = max(interval, 0.0001)
     begin = time.time()
     while 1:
@@ -45,9 +46,9 @@ async def _lock_handler(request):
             return utility.pack_pickle_response(1)
         ok = False
         with _locker.acquire(timeout=timeout):
-            if not os.path.exists(lock_name):
+            if not os.path.exists(lock_path):
                 ok = True
-                with open(lock_name, 'w'):
+                with open(lock_path, 'w'):
                     pass
         if not ok:
             await asyncio.sleep(interval)
@@ -59,12 +60,14 @@ async def _unlock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
+    lock_path = os.path.join('locks', lock_name)
     with _locker.acquire():
         try:
-            os.remove(lock_name)
+            os.remove(lock_path)
             ok = True
         except Exception as e:
-            utility.print_out(e)
+            import traceback
+            utility.print_out(e, traceback.format_exc())
             ok = False
     return utility.pack_pickle_response(ok)
 
