@@ -201,10 +201,18 @@ class Lock(object):
         self.lock_name = lock_name
         self.timeout = timeout
         self.interval = interval
+        self.locked = False
 
     async def __aenter__(self):
-        ret = await acquire_lock(self.lock_name, self.timeout, self.interval)
-        return self if ret else None
+        code = await acquire_lock(self.lock_name, self.timeout, self.interval)
+        if code == 0:
+            self.locked = True
+            return self
+        else:
+            self.locked = False
+            return None
 
     async def __aexit__(self, exc_type, exc, tb):
+        if not self.locked:
+            return
         await release_lock(self.lock_name)
