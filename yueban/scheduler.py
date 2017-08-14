@@ -98,6 +98,19 @@ def get_web_app():
     return _web_app
 
 
+async def _yueban_handler(request):
+    path = request.path
+    if path == '/yueban/schedule':
+        return await _schedule_handler(request)
+    elif path == '/yueban/lock':
+        return await _lock_handler(request)
+    elif path == '/yueban/unlock':
+        return await _unlock_handler(request)
+    elif path == '/yueban/hotfix':
+        return await _hotfix_handler(request)
+
+
+
 def start(output=True):
     global _web_app
     global _output_schedule
@@ -105,7 +118,4 @@ def start(output=True):
     if not os.path.exists(LOCK_FILE_DIR):
         os.makedirs(LOCK_FILE_DIR)
     _web_app = web.Application()
-    _web_app.router.add_post('/yueban/schedule', _schedule_handler)
-    _web_app.router.add_post('/yueban/lock', _lock_handler)
-    _web_app.router.add_post('/yueban/unkock', _unlock_handler)
-    _web_app.router.add_post('/yueban/hotfix', _hotfix_handler)
+    _web_app.router.add_post('/yueban/{path}', _yueban_handler)
