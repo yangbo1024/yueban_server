@@ -166,7 +166,7 @@ def print_out(*args):
     print(time_str, s)
 
 
-async def lock(lock_name, timeout=2.0, interval=0.01):
+async def acquire_lock(lock_name, timeout=2.0, interval=0.01):
     """
     add a lock
     :param lock_name: Do not use special characters except '_'
@@ -178,7 +178,7 @@ async def lock(lock_name, timeout=2.0, interval=0.01):
     return bool(ret)
 
 
-async def unlock(lock_name):
+async def release_lock(lock_name):
     """
     release a lock
     :param lock_name:
@@ -203,8 +203,8 @@ class Lock(object):
         self.interval = interval
 
     async def __aenter__(self):
-        ret = await lock(self.lock_name, self.timeout, self.interval)
+        ret = await acquire_lock(self.lock_name, self.timeout, self.interval)
         return self if ret else None
 
     async def __aexit__(self, exc_type, exc, tb):
-        await unlock(self.lock_name)
+        await release_lock(self.lock_name)

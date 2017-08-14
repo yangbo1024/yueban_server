@@ -26,7 +26,7 @@ import json
 from . import config
 
 
-__version__ = '1.0.10'
+__version__ = '1.0.12'
 
 
 def refresh_config(cfg):
