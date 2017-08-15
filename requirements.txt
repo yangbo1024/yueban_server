@@ -1,6 +1,5 @@
 aiohttp
 aioredis
 gunicorn
-filelock
 lz4
 motor
