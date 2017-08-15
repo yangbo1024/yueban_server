@@ -114,7 +114,9 @@ async def _yueban_handler(request):
 async def _loop_rpop():
     global _channel_id
     redis = cache.get_connection_pool()
-    _channel_id = redis.incr(cache.INC_KEY)
+    inc_id = redis.incr(cache.INC_KEY)
+    inc_str_id = '{0}'.format(inc_id)
+    _channel_id = cache.make_key(cache.SYS_KEY_PREFIX, 'sc', inc_str_id)
     while 1:
         msg = await redis.brpop(_channel_id)
         if not msg:
