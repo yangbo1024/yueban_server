@@ -32,7 +32,7 @@ end
 class LockInfo(object):
     def __init__(self):
         self.queue = Queue()
-        self.ref = 0
+        self.ref = 1
 
 
 _web_app = None
@@ -71,8 +71,6 @@ async def _lock_handler(request):
     utility.print_out('lock_size', lock_name, size)
     await lock_info.queue.get()
     utility.print_out('got lock', lock_name)
-    if lock_info.ref <= 0:
-        _locks.pop(lock_name)
     return utility.pack_pickle_response(0)
 
 
@@ -83,6 +81,7 @@ async def _unlock_handler(request):
     redis = cache.get_connection_pool()
     utility.print_out('unlock_handler', lock_name)
     await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
+    utility.print_out('unlock_finished', lock_name)
     return utility.pack_pickle_response(0)
 
 

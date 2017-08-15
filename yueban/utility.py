@@ -192,15 +192,19 @@ class Lock(object):
         self.timeout = timeout
 
     async def __aenter__(self):
-        fu = communicate.post_scheduler('/yueban/lock', [self.lock_name])
-        sh = asyncio.shield(fu)
-        try:
-            await asyncio.wait_for(sh, self.timeout)
-            return self
-        except Exception as e:
-            import traceback
-            print_out('lock failed', self.lock_name, self.timeout, e, traceback.format_exc())
-            return None
+        # TODO
+        return self
+        # fu = communicate.post_scheduler('/yueban/lock', [self.lock_name])
+        # sh = asyncio.shield(fu)
+        # try:
+        #     await asyncio.wait_for(sh, self.timeout)
+        #     return self
+        # except Exception as e:
+        #     import traceback
+        #     print_out('lock failed', self.lock_name, self.timeout, e, traceback.format_exc())
+        #     return None
 
     async def __aexit__(self, exc_type, exc, tb):
-        return await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
+        # TODO
+        pass
+        # return await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
