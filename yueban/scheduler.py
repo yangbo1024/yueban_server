@@ -134,6 +134,6 @@ def start(output=True):
     yueban.initialize_with_file()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(cache.initialize())
-    asyncio.ensure_future(_loop_rpop)
+    asyncio.ensure_future(_loop_rpop())
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
