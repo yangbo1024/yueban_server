@@ -128,7 +128,9 @@ async def _loop_rpop():
             continue
         lock_name = msg[1]
         lock_name = str(lock_name, 'utf8')
-        q = _locks.get(lock_name)
+        if lock_name not in _locks:
+            _locks[lock_name] = Queue()
+        q = _locks[lock_name]
         utility.print_out('brpop lock', lock_name, q, q==None)
         if not q:
             continue
