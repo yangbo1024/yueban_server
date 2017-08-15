@@ -83,9 +83,6 @@ async def _unlock_handler(request):
     redis = cache.get_connection_pool()
     utility.print_out('unlock_handler', lock_name)
     await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
-    lock_info = _locks.get(lock_name)
-    if lock_info:
-        lock_info.ref -= 1
     return utility.pack_pickle_response(0)
 
 
@@ -142,6 +139,7 @@ async def _loop_rpop():
         utility.print_out('brpop lock', lock_name, lock_info, lock_info==None)
         if not lock_info:
             continue
+        lock_info.ref -= 1
         lock_info.queue.put_nowait(1)
 
 
