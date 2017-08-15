@@ -11,6 +11,8 @@ from . import communicate
 from . import config
 from . import cache
 from asyncio.queues import Queue
+import yueban
+import time
 
 
 LOCK_SCRIPT = """
@@ -54,12 +56,14 @@ async def _lock_handler(request):
     redis = cache.get_connection_pool()
     bs = await request.read()
     msg = utility.loads(bs)
-    lock_name, timeout = msg
+    lock_name = msg[0]
     if lock_name not in _locks:
         _locks[lock_name] = Queue()
     q = _locks[lock_name]
     await redis.eval(LOCK_SCRIPT, keys=[lock_name, _channel_id])
     await q.get()
+    if q.qsize() <= 0:
+        _locks.pop(lock_name)
     return utility.pack_pickle_response(0)
 
 
@@ -127,6 +131,7 @@ def start(output=True):
     global _web_app
     global _output_schedule
     _output_schedule = output
+    yueban.initialize_with_file()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(cache.initialize())
     asyncio.ensure_future(_loop_rpop)

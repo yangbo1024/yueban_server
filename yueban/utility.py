@@ -13,6 +13,7 @@ import datetime
 from . import communicate
 import os
 import os.path
+import asyncio
 
 
 def simple_crypt(bs):
@@ -186,22 +187,18 @@ class Lock(object):
             else:
                 print('do some work')
     """
-    def __init__(self, lock_name, timeout=2.0, interval=0.01):
+    def __init__(self, lock_name, timeout=2.0):
         self.lock_name = lock_name
         self.timeout = timeout
-        self.interval = interval
-        self.locked = False
 
     async def __aenter__(self):
-        code = await communicate.post_scheduler('/yueban/lock', [self.lock_name, self.timeout, self.interval])
-        if code == 0:
-            self.locked = True
+        fu = communicate.post_scheduler('/yueban/lock', [self.lock_name])
+        sh = asyncio.shield(fu)
+        try:
+            await asyncio.wait_for(sh, self.timeout)
             return self
-        else:
-            self.locked = False
+        except:
             return None
 
     async def __aexit__(self, exc_type, exc, tb):
-        if not self.locked:
-            return
-        await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
+        return await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
