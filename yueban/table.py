@@ -13,15 +13,21 @@ import os
 from . import utility
 import traceback
 import csv
+import os.path
 
 
 _cached_mtimes = {}
 _cached_tables = {}
+_inited = False
 
 
 def _get_table_path(table_name):
+    global _inited
     table_file_name = table_name + '.csv'
     csv_dir = config.get_csv_dir()
+    if not _inited:
+        if not os.path.exists(csv_dir):
+            os.mkdirs(csv_dir)
     path = os.path.join(csv_dir, table_file_name)
     return path
 
