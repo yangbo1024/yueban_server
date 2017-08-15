@@ -58,8 +58,12 @@ async def _lock_handler(request):
     if lock_name not in _locks:
         _locks[lock_name] = Queue()
     q = _locks[lock_name]
+    utility.print_out('lock_handler', lock_name)
     await redis.eval(LOCK_SCRIPT, keys=[lock_name, _channel_id])
+    size = await redis.llen(lock_name)
+    utility.print_out('lock_size', lock_name, size)
     await q.get()
+    utility.print_out('got lock', lock_name)
     if q.qsize() <= 0:
         _locks.pop(lock_name)
     return utility.pack_pickle_response(0)
@@ -123,6 +127,7 @@ async def _loop_rpop():
             continue
         lock_name = msg[1]
         q = _locks.get(lock_name)
+        utility.print_out('brpop lock', lock_name, q, q==None)
         if not q:
             continue
         q.put_nowait(1)
