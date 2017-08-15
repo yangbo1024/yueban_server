@@ -212,7 +212,7 @@ async def _hotfix_handler(request):
     import importlib
     try:
         importlib.invalidate_caches()
-        m = importlib.load_module('hotfix')
+        m = importlib.import_module('hotfix')
         importlib.reload(m)
         result = m.run()
     except Exception as e:

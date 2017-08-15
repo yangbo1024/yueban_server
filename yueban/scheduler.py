@@ -29,6 +29,12 @@ end
 """
 
 
+class LockInfo(object):
+    def __init__(self):
+        self.queue = Queue()
+        self.ref = 0
+
+
 _web_app = None
 _output_schedule = True
 _channel_id = ''
@@ -56,15 +62,16 @@ async def _lock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     if lock_name not in _locks:
-        _locks[lock_name] = Queue()
-    q = _locks[lock_name]
+        _locks[lock_name] = LockInfo()
+    lock_info = _locks[lock_name]
+    lock_info.ref += 1
     utility.print_out('lock_handler', lock_name)
     await redis.eval(LOCK_SCRIPT, keys=[lock_name, _channel_id])
     size = await redis.llen(lock_name)
     utility.print_out('lock_size', lock_name, size)
-    await q.get()
+    await lock_info.queue.get()
     utility.print_out('got lock', lock_name)
-    if q.qsize() <= 0:
+    if lock_info.ref <= 0:
         _locks.pop(lock_name)
     return utility.pack_pickle_response(0)
 
@@ -76,6 +83,9 @@ async def _unlock_handler(request):
     redis = cache.get_connection_pool()
     utility.print_out('unlock_handler', lock_name)
     await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
+    lock_info = _locks.get(lock_name)
+    if lock_info:
+        lock_info.ref -= 1
     return utility.pack_pickle_response(0)
 
 
@@ -87,7 +97,7 @@ async def _hotfix_handler(request):
     import importlib
     try:
         importlib.invalidate_caches()
-        m = importlib.load_module('hotfix')
+        m = importlib.import_module('hotfix')
         importlib.reload(m)
         result = m.run()
     except Exception as e:
@@ -128,13 +138,11 @@ async def _loop_rpop():
             continue
         lock_name = msg[1]
         lock_name = str(lock_name, 'utf8')
-        if lock_name not in _locks:
-            _locks[lock_name] = Queue()
-        q = _locks[lock_name]
-        utility.print_out('brpop lock', lock_name, q, q==None)
-        if not q:
+        lock_info = _locks.get(lock_name)
+        utility.print_out('brpop lock', lock_name, lock_info, lock_info==None)
+        if not lock_info:
             continue
-        q.put_nowait(1)
+        lock_info.queue.put_nowait(1)
 
 
 def start(output=True):
