@@ -12,20 +12,18 @@ from . import config
 from . import cache
 from asyncio.queues import Queue
 import yueban
-import time
 
 
 LOCK_SCRIPT = """
 redis.call("lpush", KEYS[1], KEYS[2])
-local l = redis.call("llen", KEYS[1])
-if l <= 1 then
+if redis.call("llen", KEYS[1]) <= 1 then
     redis.call("lpush", KEYS[2], KEYS[1])
 end
 """
 UNLOCK_SCRIPT = """
 redis.call("rpop", KEYS[1])
 if redis.call("llen", KEYS[1]) > 0 then
-    local k = redis.call("lindex", -1)
+    local k = redis.call("lindex", KEYS[1], -1)
     redis.call("lpush", k, KEYS[1])
 end
 """
@@ -117,6 +115,7 @@ async def _loop_rpop():
     inc_id = redis.incr(cache.INC_KEY)
     inc_str_id = '{0}'.format(inc_id)
     _channel_id = cache.make_key(cache.SYS_KEY_PREFIX, 'sc', inc_str_id)
+    utility.print_out('loop_rpop_channel', _channel_id)
     while 1:
         msg = await redis.brpop(_channel_id)
         if not msg:
