@@ -110,7 +110,6 @@ async def _yueban_handler(request):
         return await _hotfix_handler(request)
 
 
-
 def start(output=True):
     global _web_app
     global _output_schedule

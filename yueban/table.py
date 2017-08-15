@@ -12,6 +12,7 @@ from . import config
 import os
 from . import utility
 import traceback
+import csv
 
 
 _cached_mtimes = {}
@@ -26,20 +27,22 @@ def _get_table_path(table_name):
 
 
 def _load_table_data(path):
+    table_data = []
     with open(path) as f:
-        data = f.read()
-        return data
+        reader = csv.DictReader(f)
+        for row in reader:
+            table_data.append(row)
+    return table_data
 
 
 def update_table(table_name, table_data_str):
     path = _get_table_path(table_name)
     with open(path, 'w') as f:
         f.write(table_data_str)
-        utility.print_out('update_table', table_name, path, table_data_str)
 
 
 def _get_newest_table_data(table_name):
-    path = _load_table_data(table_name)
+    path = _get_table_path(table_name)
     try:
         stat_info = os.stat(path)
         old_time = _cached_mtimes.get(table_name, 0)
@@ -75,15 +78,7 @@ def get_rows(table_name, index_name, index_value):
     table_data = _get_newest_table_data(table_name)
     if not table_data:
         return None
-    headers = table_data[0]
-    if index_name not in headers:
-        return None
-    col_idx = headers.index(index_name)
-    ret = []
-    for row_data in table_data:
-        if row_data[col_idx] == index_value:
-            row_map = {k: v for k, v in zip(headers, row_data)}
-            ret.append(row_map)
+    ret = [row_data for row_data in table_data if row_data[index_name] == index_value]
     return ret
 
 
@@ -98,14 +93,9 @@ def get_row(table_name, index_name, index_value):
     table_data = _get_newest_table_data(table_name)
     if not table_data:
         return None
-    headers = table_data[0]
-    if index_name not in headers:
-        return None
-    col_idx = headers.index(index_name)
     for row_data in table_data:
-        if row_data[col_idx] == index_value:
-            row_map = {k: v for k, v in zip(headers, row_data)}
-            return row_map
+        if row_data[index_name] == index_value:
+            return row_data
     return None
 
 
@@ -118,8 +108,7 @@ def get_cell(table_name, index_name, index_value, query_column):
     :param query_column:
     :return:
     """
-    table_data = _get_newest_table_data(table_name)
-    row_map = get_row(table_data, index_name, index_value)
+    row_map = get_row(table_name, index_name, index_value)
     if not row_map:
         return None
     return row_map.get(query_column)
