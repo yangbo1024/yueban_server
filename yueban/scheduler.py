@@ -8,18 +8,31 @@ import asyncio
 from aiohttp import web
 from . import utility
 from . import communicate
-import filelock
-import os.path
-import time
 from . import config
+from . import cache
+from asyncio.queues import Queue
 
 
-LOCK_FILE_DIR = 'locks'
+LOCK_SCRIPT = """
+redis.call("lpush", KEYS[1], KEYS[2])
+local l = redis.call("llen", KEYS[1])
+if l <= 1 then
+    redis.call("lpush", KEYS[2], KEYS[1])
+end
+"""
+UNLOCK_SCRIPT = """
+redis.call("rpop", KEYS[1])
+if redis.call("llen", KEYS[1]) > 0 then
+    local k = redis.call("lindex", -1)
+    redis.call("lpush", k, KEYS[1])
+end
+"""
 
 
 _web_app = None
 _output_schedule = True
-_locker = filelock.FileLock('yueban_lock')
+_channel_id = ''
+_locks = {}
 
 
 async def _future(seconds, url, args):
@@ -38,41 +51,25 @@ async def _schedule_handler(request):
 
 
 async def _lock_handler(request):
+    redis = cache.get_connection_pool()
     bs = await request.read()
     msg = utility.loads(bs)
-    lock_name, timeout, interval = msg
-    lock_path = os.path.join(LOCK_FILE_DIR, lock_name)
-    interval = max(interval, 0.0001)
-    begin = time.time()
-    while 1:
-        if time.time() - begin >= timeout:
-            return utility.pack_pickle_response(1)
-        ok = False
-        with _locker.acquire(timeout=timeout):
-            if not os.path.exists(lock_path):
-                ok = True
-                with open(lock_path, 'w'):
-                    pass
-        if not ok:
-            await asyncio.sleep(interval)
-        else:
-            return utility.pack_pickle_response(0)
+    lock_name, timeout = msg
+    if lock_name not in _locks:
+        _locks[lock_name] = Queue()
+    q = _locks[lock_name]
+    await redis.eval(LOCK_SCRIPT, keys=[lock_name, _channel_id])
+    await q.get()
+    return utility.pack_pickle_response(0)
 
 
 async def _unlock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
-    lock_path = os.path.join(LOCK_FILE_DIR, lock_name)
-    with _locker.acquire():
-        try:
-            os.remove(lock_path)
-            ok = True
-        except Exception as e:
-            import traceback
-            utility.print_out(e, traceback.format_exc())
-            ok = False
-    return utility.pack_pickle_response(ok)
+    redis = cache.get_connection_pool()
+    await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
+    return utility.pack_pickle_response(0)
 
 
 async def _hotfix_handler(request):
@@ -110,11 +107,28 @@ async def _yueban_handler(request):
         return await _hotfix_handler(request)
 
 
+async def _loop_rpop():
+    global _channel_id
+    redis = cache.get_connection_pool()
+    _channel_id = redis.incr(cache.INC_KEY)
+    while 1:
+        msg = await redis.brpop(_channel_id)
+        if not msg:
+            utility.print_out('receive empty msg', _channel_id)
+            continue
+        lock_name = msg[1]
+        q = _locks.get(lock_name)
+        if not q:
+            continue
+        q.put_nowait(1)
+
+
 def start(output=True):
     global _web_app
     global _output_schedule
     _output_schedule = output
-    if not os.path.exists(LOCK_FILE_DIR):
-        os.makedirs(LOCK_FILE_DIR)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(cache.initialize())
+    asyncio.ensure_future(_loop_rpop)
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)

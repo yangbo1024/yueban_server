@@ -14,6 +14,7 @@ _redis_pool = None
 
 
 SYS_KEY_PREFIX = 'yueban'
+INC_KEY = 'yueban:inc'
 
 
 def make_key(*fields):
