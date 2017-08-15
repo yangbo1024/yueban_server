@@ -21,8 +21,7 @@ def _ensure_logger(category, log_name='yueban.log'):
     _logger = logging.getLogger('')
     _logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(message)s")
-    if not os.path.exists(category):
-        os.makedirs(category)
+    utility.ensure_directory(category)
     path = os.path.join(category, log_name)
     handler = MultiProcessTimedRotatingFileHandler(path, when="MIDNIGHT")
     handler.suffix = "%Y%m%d"

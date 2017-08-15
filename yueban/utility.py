@@ -11,6 +11,8 @@ import json
 from aiohttp import web
 import datetime
 from . import communicate
+import os
+import os.path
 
 
 def simple_crypt(bs):
@@ -164,6 +166,14 @@ def print_out(*args):
     now = datetime.datetime.now()
     time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')
     print(time_str, s)
+
+
+def ensure_directory(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except FileExistsError:
+        pass
 
 
 class Lock(object):

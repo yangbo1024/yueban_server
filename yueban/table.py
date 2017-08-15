@@ -26,8 +26,8 @@ def _get_table_path(table_name):
     table_file_name = table_name + '.csv'
     csv_dir = config.get_csv_dir()
     if not _inited:
-        if not os.path.exists(csv_dir):
-            os.makedirs(csv_dir)
+        _inited = True
+        utility.ensure_directory(csv_dir)
     path = os.path.join(csv_dir, table_file_name)
     return path
 
