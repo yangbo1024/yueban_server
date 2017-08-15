@@ -74,6 +74,7 @@ async def _unlock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     redis = cache.get_connection_pool()
+    utility.print_out('unlock_handler', lock_name)
     await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
     return utility.pack_pickle_response(0)
 
@@ -126,6 +127,7 @@ async def _loop_rpop():
             utility.print_out('receive empty msg', _channel_id)
             continue
         lock_name = msg[1]
+        lock_name = str(lock_name, 'utf8')
         q = _locks.get(lock_name)
         utility.print_out('brpop lock', lock_name, q, q==None)
         if not q:
