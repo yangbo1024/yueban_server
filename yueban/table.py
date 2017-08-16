@@ -66,12 +66,6 @@ def _load_table_data(path):
     return table_data
 
 
-def update_table(table_name, table_data_str):
-    path = _get_table_path(table_name)
-    with open(path, 'w') as f:
-        f.write(table_data_str)
-
-
 def _get_newest_table_data(table_name):
     path = _get_table_path(table_name)
     try:
@@ -92,6 +86,13 @@ def _get_newest_table_data(table_name):
             return table_data
     except Exception as e:
         utility.print_out(e, traceback.format_exc())
+
+
+def update_table(table_name, table_data_str):
+    path = _get_table_path(table_name)
+    with open(path, 'w') as f:
+        f.write(table_data_str)
+    _get_newest_table_data(table_name)
 
 
 def get_table(table_name):
