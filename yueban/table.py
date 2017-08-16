@@ -16,18 +16,26 @@ import csv
 import os.path
 
 
+TYPE_FUNC_MAP = {
+    'int': int,
+    'long': int,
+    'float': float,
+    'str': lambda x: x,
+    'string': lambda x: x,
+    'json': json.loads,
+    'list': json.loads,
+    'dict': json.loads,
+}
+
+
 _cached_mtimes = {}
 _cached_tables = {}
 _inited = False
 
 
 def _get_table_path(table_name):
-    global _inited
     table_file_name = table_name + '.csv'
     csv_dir = config.get_csv_dir()
-    if not _inited:
-        _inited = True
-        utility.ensure_directory(csv_dir)
     path = os.path.join(csv_dir, table_file_name)
     return path
 
@@ -35,9 +43,26 @@ def _get_table_path(table_name):
 def _load_table_data(path):
     table_data = []
     with open(path) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            table_data.append(row)
+        reader = csv.reader(f)
+        headers = []
+        type_funcs = []
+        for i, row in enumerate(reader):
+            if i == 0:
+                for col in row:
+                    tp_begin = col.index('(')
+                    tp_end = col.index(')')
+                    header = col[:tp_begin]
+                    tp_func = col[tp_begin+1:tp_end]
+                    headers.append(header)
+                    type_funcs.append(tp_func)
+            else:
+                if not row[0]:
+                    break
+                row_data = {}
+                for j, col in enumerate(row):
+                    tpf = type_funcs[j]
+                    f = TYPE_FUNC_MAP[tpf]
+                    row_data[headers[j]] = f(col)
     return table_data
 
 
@@ -70,6 +95,11 @@ def _get_newest_table_data(table_name):
 
 
 def get_table(table_name):
+    """
+    Get the whole table data
+    :param table_name:
+    :return:
+    """
     return _get_newest_table_data(table_name)
 
 
@@ -119,27 +149,3 @@ def get_cell(table_name, index_name, index_value, query_column):
         return None
     return row_map.get(query_column)
 
-
-def get_int(table_name, index_name, index_value, query_column):
-    cell = get_cell(table_name, index_name, index_value, query_column)
-    return int(cell) if cell else None
-
-
-def get_float(table_name, index_name, index_value, query_column):
-    cell = get_cell(table_name, index_name, index_value, query_column)
-    return float(cell) if cell else None
-
-
-def get_string(table_name, index_name, index_value, query_column):
-    cell = get_cell(table_name, index_name, index_value, query_column)
-    return None if cell is None else cell
-
-
-def get_list(table_name, index_name, index_value, query_column):
-    cell = get_cell(table_name, index_name, index_value, query_column)
-    return json.loads(cell) if cell else None
-
-
-def get_dict(table_name, index_name, index_value, query_column):
-    cell = get_cell(table_name, index_name, index_value, query_column)
-    return json.loads(cell) if cell else None
