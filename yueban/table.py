@@ -63,7 +63,7 @@ def _load_table_data(path):
                     tpf = type_funcs[j]
                     f = TYPE_FUNC_MAP[tpf]
                     row_data[headers[j]] = f(col)
-                    table_data.append(row_data)
+                table_data.append(row_data)
     return table_data
 
 
