@@ -89,9 +89,9 @@ def _get_newest_table_data(table_name):
         utility.print_out(e, traceback.format_exc())
 
 
-def update_table(table_name, table_data_str):
+def update_table(table_name, table_data_str, encoding='utf-8'):
     path = _get_table_path(table_name)
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding=encoding) as f:
         f.write(table_data_str)
     _get_newest_table_data(table_name)
 
