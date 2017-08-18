@@ -26,7 +26,9 @@ template:
         "password": "yj123456789.",
         "user": "game_yydz_mongodb",
         "db": "game_yydz",
-        "replicaset": ""
+        "replicaset": "",
+        "log_collection": "yueban_log",
+        "log_expire": 5184000
     },
     "gaters": {
         "huanan_1": {
@@ -111,5 +113,11 @@ def get_csv_dir():
     return _config['csv_dir']
 
 
-def get_hotfix_password():
-    return _config['hotfix_password']
+def get_log_collection():
+    cfg = _config['stat_mongodb']
+    return cfg['log_collection']
+
+
+def get_log_expire_seconds():
+    cfg = _config['stat_mongodb']
+    return cfg['log_expire']

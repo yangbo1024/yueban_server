@@ -5,7 +5,13 @@ Log functions
 """
 
 import asyncio
-from . import communicate
+from . import storage
+from datetime import datetime
+from . import config
+import pymongo
+
+
+_log_collection = None
 
 
 async def _log(category, log_type, *args):
@@ -14,12 +20,18 @@ async def _log(category, log_type, *args):
     :param args:
     :return:
     """
+    global _log_collection
     if not args:
         return
     arg_list = [str(arg) for arg in args]
     arg_list.insert(0, log_type)
     s = " ".join(arg_list)
-    await communicate.post_logger('/yueban/log', [category, s])
+    doc = {
+        'time': datetime.now(),
+        'category': category,
+        'log': s,
+    }
+    await _log_collection.insert(doc)
 
 
 async def info(category, *args):
@@ -45,3 +57,21 @@ async def error(category, *args):
 def error_async(category, *args):
     asyncio.ensure_future(error(category, *args))
 
+
+async def initialize(ensure_index_sync=True):
+    global _log_collection
+    db = storage.get_stat_conn()
+    if not db:
+        raise RuntimeError("you should init stat-mongodb before log")
+    col_name = config.get_log_collection()
+    _log_collection = db[col_name]
+    indexes = [
+        ('time', pymongo.ASCENDING),
+        ('category', pymongo.ASCENDING),
+    ]
+    expire_seconds = config.get_log_expire_seconds()
+    task = _log_collection.create_index(indexes, expireAfterSeconds=expire_seconds)
+    if ensure_index_sync:
+        await task
+    else:
+        asyncio.ensure_future(task)

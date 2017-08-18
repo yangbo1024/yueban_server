@@ -8,7 +8,6 @@ import asyncio
 from aiohttp import web
 from . import utility
 from . import communicate
-from . import config
 from . import cache
 from asyncio.queues import Queue
 import yueban
@@ -86,10 +85,6 @@ async def _unlock_handler(request):
 
 
 async def _hotfix_handler(request):
-    bs = await request.read()
-    msg = utility.loads(bs)
-    if msg != config.get_hotfix_password():
-        return utility.pack_pickle_response('bad password')
     import importlib
     try:
         importlib.invalidate_caches()

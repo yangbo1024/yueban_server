@@ -205,10 +205,6 @@ async def _get_all_clients_handler(request):
 
 
 async def _hotfix_handler(request):
-    bs = await request.read()
-    msg = utility.loads(bs)
-    if msg != config.get_hotfix_password():
-        return utility.pack_pickle_response('bad password')
     import importlib
     try:
         importlib.invalidate_caches()

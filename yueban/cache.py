@@ -4,10 +4,8 @@
 Cache service: supply redis access
 """
 
-import asyncio
 import aioredis
 from . import config
-from . import utility
 
 
 _redis_pool = None

@@ -39,12 +39,6 @@ async def post_all_gaters(path, args):
     return dict(zip(gate_ids, results))
 
 
-async def post_logger(path, args):
-    base_url = config.get_logger_url()
-    url = '{0}{1}'.format(base_url, path)
-    return await post(url, args)
-
-
 async def post_scheduler(path, args):
     base_url = config.get_scheduler_url()
     url = '{0}{1}'.format(base_url, path)
