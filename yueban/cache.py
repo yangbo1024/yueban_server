@@ -11,8 +11,8 @@ from . import config
 _redis_pool = None
 
 
-SYS_KEY_PREFIX = 'yueban'
-INC_KEY = 'yueban:inc'
+SYS_KEY_PREFIX = '_yueban'
+INC_KEY = '_yueban:inc'
 
 
 def make_key(*fields):

@@ -8,7 +8,6 @@ import asyncio
 from . import storage
 from datetime import datetime
 from . import config
-import pymongo
 
 
 _log_collection = None
@@ -58,20 +57,27 @@ def error_async(category, *args):
     asyncio.ensure_future(error(category, *args))
 
 
-async def initialize(ensure_index_sync=True):
+async def ensure_collection():
+    """
+    Only call once in whole system's lifetime
+    :return:
+    """
+    db = storage.get_stat_conn()
+    col_name = config.get_log_collection()
+    col = db[col_name]
+    indexes = [
+        ('time', 1),
+        ('category', 1),
+    ]
+    expire_seconds = config.get_log_expire_seconds()
+    expire_seconds = int(expire_seconds)
+    await col.create_index(indexes, expireAfterSeconds=expire_seconds)
+
+
+async def initialize():
     global _log_collection
     db = storage.get_stat_conn()
     if not db:
         raise RuntimeError("you should init stat-mongodb before log")
     col_name = config.get_log_collection()
     _log_collection = db[col_name]
-    indexes = [
-        ('time', pymongo.ASCENDING),
-        ('category', pymongo.ASCENDING),
-    ]
-    expire_seconds = config.get_log_expire_seconds()
-    task = _log_collection.create_index(indexes, expireAfterSeconds=expire_seconds)
-    if ensure_index_sync:
-        await task
-    else:
-        asyncio.ensure_future(task)
