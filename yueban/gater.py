@@ -17,12 +17,15 @@ from . import communicate
 from . import config
 import traceback
 import time
-import signal
+import logging
+import os
+import os.path
 
 
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
+_logger = None
 
 
 class Client(object):
@@ -37,6 +40,36 @@ class Client(object):
         self.recv_task = None
         self.send_queue = None
         self.create_time = int(time.time())
+
+
+def init_log(log_name):
+    global _logger
+    _logger = logging.getLogger('')
+    _logger.setLevel(logging.DEBUG)
+    formater = logging.Formatter("%(asctime)s %(message)s")
+    dir_name = os.path.dirname(log_name)
+    if dir_name and not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    handler = logging.handlers.TimedRotatingFileHandler(log_name, when="midnight")
+    handler.suffix = "%Y%m%d"
+    handler.setFormatter(formater)
+    _logger.addHandler(handler)
+
+
+def log_info(*args):
+    global _logger
+    if not args:
+        return
+    s = " ".join([str(arg) for arg in args])
+    _logger.info("INFO %s", s)
+
+
+def log_error(*args):
+    global _logger
+    if not args:
+        return
+    s = " ".join([str(arg) for arg in args])
+    _logger.info("ERROR %s", s)
 
 
 def _add_client(client_id, host, port):
@@ -67,7 +100,7 @@ def _unpack(proto_body):
     bs = lz4block.decompress(proto_body)
     size = len(bs)
     if size < 4:
-        utility.print_out('bad_proto_body', proto_body, bs)
+        log_error('bad_proto_body', proto_body, bs)
         return None
     id_bs = bs[:4]
     proto_id = struct.unpack('>i', id_bs)[0]
@@ -87,11 +120,11 @@ async def _send_routine(client_obj, ws):
             msg = await queue.get()
             if msg is None:
                 # only in _remove_client can be None
-                utility.print_out('send_queue_none', client_id)
+                log_info('send_queue_none', client_id)
                 break
             ws.send_bytes(msg)
         except Exception as e:
-            utility.print_out('send_routine_error', client_id, e, traceback.format_exc())
+            log_error('send_routine_error', client_id, e, traceback.format_exc())
 
 
 async def _recv_routine(client_obj, ws):
@@ -109,12 +142,12 @@ async def _recv_routine(client_obj, ws):
             elif msg.type == web.WSMsgType.ERROR:
                 remove_client(client_id)
                 await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
-                utility.print_out('msg error', client_id)
+                log_error('msg error', client_id)
                 break
             else:
-                utility.print_out("bad msg:", msg, msg.type)
+                log_error("bad msg:", msg, msg.type)
         except Exception as e:
-            utility.print_out('recv_routine_error', client_id, e, traceback.format_exc())
+            log_error('recv_routine_error', client_id, e, traceback.format_exc())
 
 
 async def _websocket_handler(request):
@@ -132,7 +165,7 @@ async def _websocket_handler(request):
     recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
     client_obj.send_task = send_task
     client_obj.recv_task = recv_task
-    utility.print_out('serve_client', client_id, client_host, client_port)
+    log_info('serve_client', client_id, client_host, client_port)
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
     return ws
 
@@ -205,6 +238,7 @@ async def _get_all_clients_handler(request):
 
 
 async def _hotfix_handler(request):
+    peername = request.transport.get_extra_info('peername')
     import importlib
     try:
         importlib.invalidate_caches()
@@ -215,8 +249,8 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    utility.print_out('hotfix', result)
-    return utility.pack_pickle_response(result)
+    log_info('hotfix', peername, result)
+    return utility.pack_json_response(result)
 
 
 def get_gate_id():
@@ -232,6 +266,7 @@ def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
+    log_name = '{0}.log'.format(gate_id)
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']

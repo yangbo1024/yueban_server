@@ -121,3 +121,4 @@ def get_log_collection():
 def get_log_expire_seconds():
     cfg = _config['stat_mongodb']
     return cfg['log_expire']
+

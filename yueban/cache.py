@@ -12,7 +12,8 @@ _redis_pool = None
 
 
 SYS_KEY_PREFIX = '_yueban'
-INC_KEY = '_yueban:inc'
+INC_KEY = '{0}:inc'.format(SYS_KEY_PREFIX)
+LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
 
 
 def make_key(*fields):

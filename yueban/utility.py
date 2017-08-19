@@ -165,7 +165,7 @@ def pack_json_response(data):
 def print_out(*args):
     s = " ".join([str(arg) for arg in args])
     now = datetime.datetime.now()
-    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')
+    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:19]
     print(time_str, s)
 
 
@@ -175,6 +175,18 @@ def ensure_directory(directory):
             os.makedirs(directory)
     except FileExistsError:
         pass
+
+
+def get_local_ips():
+    import socket
+    hostname = socket.gethostname()
+    addr_infos = socket.getaddrinfo(hostname, 1)
+    ips = []
+    for addr_info in addr_infos:
+        addr = addr_info[4]
+        ip = addr[0]
+        ips.append(ip)
+    return ips
 
 
 class Lock(object):
