@@ -165,7 +165,7 @@ def pack_json_response(data):
 def print_out(*args):
     s = " ".join([str(arg) for arg in args])
     now = datetime.datetime.now()
-    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:19]
+    time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:22]
     print(time_str, s)
 
 
