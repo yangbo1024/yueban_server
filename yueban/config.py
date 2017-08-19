@@ -26,9 +26,7 @@ template:
         "password": "yj123456789.",
         "user": "game_yydz_mongodb",
         "db": "game_yydz",
-        "replicaset": "",
-        "log_collection": "yueban_log",
-        "log_expire": 5184000
+        "replicaset": ""
     },
     "gaters": {
         "huanan_1": {
@@ -38,7 +36,6 @@ template:
             "ws_url": "ws://10.0.30.26:13100/"
         }
     },
-    "logger_url": "http://10.0.30.26:13000",
     "scheduler_url": "http://10.0.30.26:13010",
     "game_url": "http://10.0.30.26:13020",
     "ums_url": "http://10.0.30.26:13030",
@@ -76,7 +73,7 @@ def get_stat_mongo_config():
 
 def get_all_gater_ids():
     cfg = _config['gaters']
-    return cfg.keys()
+    return list(cfg.keys())
 
 
 def get_gate_config(gate_id):
@@ -87,10 +84,6 @@ def get_gate_config(gate_id):
 def get_gate_url(gate_id):
     gate_config = get_gate_config(gate_id)
     return gate_config['url']
-
-
-def get_logger_url():
-    return _config['logger_url']
 
 
 def get_scheduler_url():
@@ -111,14 +104,4 @@ def get_cms_url():
 
 def get_csv_dir():
     return _config['csv_dir']
-
-
-def get_log_collection():
-    cfg = _config['stat_mongodb']
-    return cfg['log_collection']
-
-
-def get_log_expire_seconds():
-    cfg = _config['stat_mongodb']
-    return cfg['log_expire']
 
