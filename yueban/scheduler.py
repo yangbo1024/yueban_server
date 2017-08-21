@@ -119,9 +119,6 @@ async def _loop_brpop():
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
             q = _locks.get(lock_key)
-            utility.print_out('brpop lock', lock_key, q)
-            if not q:
-                continue
             q.put_nowait(1)
         except Exception as e:
             import traceback
