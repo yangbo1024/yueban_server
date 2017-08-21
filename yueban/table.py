@@ -17,9 +17,9 @@ import os.path
 
 
 TYPE_FUNC_MAP = {
-    'int': int,
-    'long': int,
-    'float': float,
+    'int': lambda x: int(x) if x else 0,
+    'long': lambda x: int(x) if x else 0,
+    'float': lambda x: float(x) if x else 0,
     'str': lambda x: x,
     'string': lambda x: x,
     'json': json.loads,

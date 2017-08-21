@@ -9,8 +9,8 @@ from aiohttp import web
 from . import utility
 from . import communicate
 from . import cache
-from asyncio.queues import Queue
 import yueban
+import time
 
 
 LOCK_SCRIPT = """
@@ -19,6 +19,7 @@ if redis.call("llen", KEYS[1]) <= 1 then
     redis.call("lpush", KEYS[2], KEYS[1])
 end
 """
+
 UNLOCK_SCRIPT = """
 redis.call("rpop", KEYS[1])
 if redis.call("llen", KEYS[1]) > 0 then
@@ -28,16 +29,11 @@ end
 """
 
 
-class LockInfo(object):
-    def __init__(self):
-        self.queue = Queue()
-        self.ref = 1
-
-
-_web_app = None
-_output_schedule = True
-_channel_id = ''
-_locks = {}
+_web_app = globals().setdefault('_web_app')
+_channel_id = globals().setdefault('_channel_id', '')
+_locks = globals().setdefault('_locks', {})
+_send_redis = globals().setdefault('_send_redis')
+_recv_redis = globals().setdefault('_recv_redis')
 
 
 async def _future(seconds, url, args):
@@ -49,27 +45,26 @@ async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, url, args = msg
-    if _output_schedule:
-        utility.print_out('schedule', seconds, url, args)
+    utility.print_out('schedule', seconds, url, args)
     asyncio.ensure_future(_future(seconds, url, args))
     return utility.pack_pickle_response('')
 
 
 async def _lock_handler(request):
-    redis = cache.get_connection_pool()
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
-    if lock_name not in _locks:
-        _locks[lock_name] = LockInfo()
-    lock_info = _locks[lock_name]
-    lock_info.ref += 1
-    utility.print_out('lock_handler', lock_name)
-    await redis.eval(LOCK_SCRIPT, keys=[lock_name, _channel_id])
-    size = await redis.llen(lock_name)
-    utility.print_out('lock_size', lock_name, size)
-    await lock_info.queue.get()
-    utility.print_out('got lock', lock_name)
+    lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
+    if lock_key not in _locks:
+        _locks[lock_key] = asyncio.Queue()
+    q = _locks[lock_key]
+    begin = time.time()
+    await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
+    await q.get()
+    if q.qsize() <= 0:
+        _locks.pop(lock_key)
+    used_time = time.time() - begin
+    utility.print_out('lock', lock_key, used_time)
     return utility.pack_pickle_response(0)
 
 
@@ -77,10 +72,9 @@ async def _unlock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
-    redis = cache.get_connection_pool()
-    utility.print_out('unlock_handler', lock_name)
-    await redis.eval(UNLOCK_SCRIPT, keys=[lock_name])
-    utility.print_out('unlock_finished', lock_name)
+    lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
+    await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
+    utility.print_out('unlock', lock_key)
     return utility.pack_pickle_response(0)
 
 
@@ -115,26 +109,33 @@ async def _yueban_handler(request):
         return await _hotfix_handler(request)
 
 
-async def _loop_rpop():
-    global _channel_id
-    redis = cache.get_connection_pool()
-    inc_id = redis.incr(cache.INC_KEY)
-    inc_str_id = '{0}'.format(inc_id)
-    _channel_id = cache.make_key(cache.SYS_KEY_PREFIX, 'sc', inc_str_id)
-    utility.print_out('loop_rpop_channel', _channel_id)
+async def _loop_brpop():
     while 1:
-        msg = await redis.brpop(_channel_id)
-        if not msg:
-            utility.print_out('receive empty msg', _channel_id)
-            continue
-        lock_name = msg[1]
-        lock_name = str(lock_name, 'utf8')
-        lock_info = _locks.get(lock_name)
-        utility.print_out('brpop lock', lock_name, lock_info, lock_info==None)
-        if not lock_info:
-            continue
-        lock_info.ref -= 1
-        lock_info.queue.put_nowait(1)
+        try:
+            msg = await _recv_redis.brpop(_channel_id)
+            if not msg:
+                utility.print_out('receive empty msg', _channel_id)
+                continue
+            lock_key = msg[1]
+            lock_key = str(lock_key, 'utf8')
+            q = _locks.get(lock_key)
+            utility.print_out('brpop lock', lock_key, q)
+            if not q:
+                continue
+            q.put_nowait(1)
+        except Exception as e:
+            import traceback
+            utility.print_out('loop_brpop error', e, traceback.format_exc())
+
+
+async def initialize():
+    global _channel_id
+    global _send_redis
+    global _recv_redis
+    _channel_id = utility.gen_uniq_id()
+    utility.print_out('loop_rpop_channel', _channel_id)
+    _send_redis = await cache.create_cache_connection()
+    _recv_redis = await cache.create_cache_connection()
 
 
 def start(output=True):
@@ -143,7 +144,7 @@ def start(output=True):
     _output_schedule = output
     yueban.initialize_with_file()
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(cache.initialize())
-    asyncio.ensure_future(_loop_rpop())
+    loop.run_until_complete(initialize())
+    asyncio.ensure_future(_loop_brpop())
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)

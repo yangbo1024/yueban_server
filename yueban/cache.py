@@ -12,7 +12,6 @@ _redis_pool = None
 
 
 SYS_KEY_PREFIX = '_yueban'
-INC_KEY = '{0}:inc'.format(SYS_KEY_PREFIX)
 LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
 
 
@@ -20,16 +19,23 @@ def make_key(*fields):
     return ':'.join(fields)
 
 
-async def initialize():
+async def create_connection(host, port, password, db):
+    return await aioredis.create_redis_pool((host, port), db=db, password=password)
+
+
+async def create_cache_connection():
     global _redis_pool
     cfg = config.get_cache_redis_config()
     host = cfg['host']
     port = cfg['port']
     password = cfg['password']
     db = cfg['db']
-    minsize = cfg['minsize']
-    maxsize = cfg['maxsize']
-    _redis_pool = await aioredis.create_redis_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize)
+    return await create_connection(host, port, password, db)
+
+
+async def initialize():
+    global _redis_pool
+    _redis_pool = await create_cache_connection()
 
 
 def get_connection_pool():

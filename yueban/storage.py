@@ -19,11 +19,7 @@ async def create_connection(host, port, database, user, password, replicaset='')
     return db
 
 
-async def initialize_data():
-    """
-    :return:
-    """
-    global _data_db_conn
+async def create_data_connection():
     cfg = config.get_data_mongo_config()
     host = cfg['host']
     port = cfg['port']
@@ -31,11 +27,15 @@ async def initialize_data():
     user = cfg['user']
     db = cfg['db']
     replicaset = cfg['replicaset']
-    _data_db_conn = await create_connection(host, port, db, user, password, replicaset)
+    return await create_connection(host, port, db, user, password, replicaset)
 
 
-async def initialize_stat():
-    global _stat_db_conn
+async def initialize_data():
+    global _data_db_conn
+    _data_db_conn = await create_data_connection()
+
+
+async def create_stat_connection():
     cfg = config.get_stat_mongo_config()
     host = cfg['host']
     port = cfg['port']
@@ -43,7 +43,12 @@ async def initialize_stat():
     user = cfg['user']
     db = cfg['db']
     replicaset = cfg['replicaset']
-    _stat_db_conn = await create_connection(host, port, db, user, password, replicaset)
+    return await create_connection(host, port, db, user, password, replicaset)
+
+
+async def initialize_stat():
+    global _stat_db_conn
+    _stat_db_conn = await create_stat_connection()
 
 
 def get_data_conn():
