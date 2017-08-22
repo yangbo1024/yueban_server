@@ -142,7 +142,7 @@ async def _loop_brpop():
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
             lock_obj = _locks[lock_key]
-            lock_obj.release()
+            lock_obj.lock.release()
         except Exception as e:
             import traceback
             utility.print_out('loop_brpop error', e, traceback.format_exc())
