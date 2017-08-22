@@ -31,8 +31,8 @@ end
 
 class Lock(object):
     def __init__(self):
-        self.send_queue = asyncio.Queue()
-        self.recv_queue = asyncio.Queue()
+        self.send_queue = asyncio.PriorityQueue()
+        self.recv_queue = asyncio.PriorityQueue()
 
 
 _web_app = globals().setdefault('_web_app')
