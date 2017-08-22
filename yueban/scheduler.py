@@ -30,10 +30,9 @@ end
 
 
 class Lock(object):
-    def __init__(self, lock_key):
-        self.lock_key = lock_key
-        self.lock = asyncio.Lock()
-        self.ref = 0
+    def __init__(self):
+        self.send_queue = asyncio.Queue()
+        self.recv_queue = asyncio.Queue()
 
 
 _web_app = globals().setdefault('_web_app')
@@ -59,18 +58,16 @@ async def _schedule_handler(request):
 
 def _ensure_get_lock(lock_key):
     if lock_key not in _locks:
-        _locks[lock_key] = Lock(lock_key)
+        _locks[lock_key] = Lock()
     return _locks[lock_key]
 
 
-def _inc_lock_ref(lock_obj):
-    lock_obj.ref += 1
-
-
-def _dec_lock_ref(lock_obj):
-    lock_obj.ref -= 1
-    if lock_obj.ref <= 0:
-        _locks.pop(lock_obj.lock_key)
+def _check_remove_queue(lock_key):
+    lock = _locks.get(lock_key)
+    if not lock:
+        return
+    if lock.send_queue.qsize() <= 0 and lock.recv_queue.qsize() <= 0:
+        _locks.pop(lock_key)
 
 
 async def _lock_handler(request):
@@ -78,15 +75,13 @@ async def _lock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    lock_obj = _ensure_get_lock(lock_key)
     begin = time.time()
-    await lock_obj.lock.acquire()
-    _inc_lock_ref(lock_obj)
+    lock_obj = _ensure_get_lock(lock_key)
+    lock_obj.send_queue.put_nowait(1)
     await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
-    await lock_obj.lock.acquire()
-    _dec_lock_ref(lock_obj)
-    lock_obj.lock.release()
+    await lock_obj.recv_queue.get()
     used_time = time.time() - begin
+    _check_remove_queue(lock_key)
     utility.print_out('lock', lock_key, used_time)
     return utility.pack_pickle_response(0)
 
@@ -142,7 +137,7 @@ async def _loop_brpop():
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
             lock_obj = _locks[lock_key]
-            lock_obj.lock.release()
+            lock_obj.recv_queue.put_nowait(1)
         except Exception as e:
             import traceback
             utility.print_out('loop_brpop error', e, traceback.format_exc())
