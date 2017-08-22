@@ -223,8 +223,6 @@ async def _get_client_info_handler(request):
 
 
 async def _get_all_clients_handler(request):
-    bs = await request.read()
-    data = utility.loads(bs)
     client_ids = _clients.keys()
     infos = {}
     for client_id in client_ids:
@@ -262,21 +260,35 @@ def set_gate_id(gate_id):
     _gate_id = gate_id
 
 
+_handlers = {
+    '/yueban/proto': _proto_handler,
+    '/yueban/close_client': _close_client_handler,
+    '/yueban/get_online_cnt': _get_online_cnt_handler,
+    '/yueban/get_client_info': _get_client_info_handler,
+    '/yueban/get_all_clients': _get_all_clients_handler,
+    '/yueban/hotfix': _hotfix_handler,
+}
+
+
+async def _yueban_handler(request):
+    handler = _handlers.get(request.path)
+    if not handler:
+        log_error('bad handler', request.path)
+        return utility.pack_json_response(None)
+    return await handler(request)
+
+
 def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
     log_name = '{0}.log'.format(gate_id)
+    init_log(log_name)
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']
     port = cfg['port']
     _web_app = web.Application()
     _web_app.router.add_get('/', _websocket_handler)
-    _web_app.router.add_post('/yueban/proto', _proto_handler)
-    _web_app.router.add_post('/yueban/close_client', _close_client_handler)
-    _web_app.router.add_post('/yueban/get_online_cnt', _get_online_cnt_handler)
-    _web_app.router.add_post('/yueban/get_client_info', _get_client_info_handler)
-    _web_app.router.add_post('/yueban/get_all_clients', _get_all_clients_handler)
-    _web_app.router.add_post('/yueban/hotfix', _hotfix_handler)
+    _web_app.router.add_post('/yueban/{path}', _yueban_handler)
     web.run_app(_web_app, host=host, port=port)
