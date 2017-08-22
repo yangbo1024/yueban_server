@@ -199,7 +199,7 @@ class Lock(object):
             else:
                 print('do some work')
     """
-    def __init__(self, lock_name, timeout=2.0):
+    def __init__(self, lock_name, timeout=5.0):
         self.lock_name = lock_name
         self.timeout = timeout
 
