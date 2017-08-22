@@ -29,6 +29,13 @@ end
 """
 
 
+class Lock(object):
+    def __init__(self, lock_key):
+        self.lock_key = lock_key
+        self.lock = asyncio.Lock()
+        self.ref = 0
+
+
 _web_app = globals().setdefault('_web_app')
 _channel_id = globals().setdefault('_channel_id', '')
 _locks = globals().setdefault('_locks', {})
@@ -50,19 +57,35 @@ async def _schedule_handler(request):
     return utility.pack_pickle_response('')
 
 
+def _ensure_get_lock(lock_key):
+    if lock_key not in _locks:
+        _locks[lock_key] = Lock(lock_key)
+    return _locks[lock_key]
+
+
+def _inc_lock_ref(lock_obj):
+    lock_obj.ref += 1
+
+
+def _dec_lock_ref(lock_obj):
+    lock_obj.ref -= 1
+    if lock_obj.ref <= 0:
+        _locks.pop(lock_obj.lock_key)
+
+
 async def _lock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    if lock_key not in _locks:
-        _locks[lock_key] = asyncio.Queue()
-    q = _locks[lock_key]
+    lock_obj = _ensure_get_lock(lock_key)
     begin = time.time()
+    await lock_obj.lock.acquire()
+    _inc_lock_ref(lock_obj)
     await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
-    await q.get()
-    if q.qsize() <= 0:
-        _locks.pop(lock_key)
+    await lock_obj.lock.acquire()
+    _dec_lock_ref(lock_obj)
+    lock_obj.lock.release()
     used_time = time.time() - begin
     utility.print_out('lock', lock_key, used_time)
     return utility.pack_pickle_response(0)
@@ -118,8 +141,8 @@ async def _loop_brpop():
                 continue
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
-            q = _locks.get(lock_key)
-            q.put_nowait(1)
+            lock_obj = _locks[lock_key]
+            lock_obj.release()
         except Exception as e:
             import traceback
             utility.print_out('loop_brpop error', e, traceback.format_exc())
