@@ -22,7 +22,7 @@ async def _get_log_file(category):
     path = os.path.join(log_dir, category)
     path += '.log'
     if category not in _log_files:
-        f = open(path, 'a')
+        f = open(path, 'a', buffering=1)
         _log_files[category] = f
         return f
     stat_info = os.stat(path)
@@ -42,7 +42,7 @@ async def _get_log_file(category):
         ok = redis.set(log_key, postfix, expire=expire, exist=redis.SET_IF_NOT_EXIST)
         if ok:
             shutil.move(src, dst)
-        f = open(src, 'a')
+        f = open(src, 'a', buffering=1)
         _log_files[category] = f
     return _log_files[category]
 
