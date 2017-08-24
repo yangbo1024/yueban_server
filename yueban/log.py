@@ -54,7 +54,7 @@ async def _log(category, log_type, *args):
     now = datetime.now()
     time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:23]
     sl = [time_str, log_type]
-    sl.extend(args)
+    sl.extend([str(arg) for arg in args])
     sl.append(os.linesep)
     s = ' '.join(sl)
     f.write(s)
