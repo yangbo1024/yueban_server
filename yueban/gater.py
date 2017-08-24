@@ -292,4 +292,4 @@ def run(gate_id):
     _web_app = web.Application()
     _web_app.router.add_get('/', _websocket_handler)
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
-    web.run_app(_web_app, host=host, port=port)
+    web.run_app(_web_app, host=host, port=port, access_log=None)
