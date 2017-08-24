@@ -1,7 +1,11 @@
 # -*- coding:utf-8 -*-
 
 """
-Time based call-later scheduler
+调度服务
+    1. call_later
+    2. 全局锁
+本服务业务简单，不能重启
+如果有非常特殊的需求需要热更，可以用在线hotfix的方式
 """
 
 import asyncio

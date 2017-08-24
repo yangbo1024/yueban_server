@@ -1,10 +1,9 @@
 # -*- coding:utf-8 -*-
 
 """
-CSV table handling
-for each csv table:
-    1st line: column(index) names
-    2nd line~end: data rows
+csv数据表处理
+每个csv表第一行为表头，第二行起为数据
+所有数据已经转换为表头中的类型
 """
 
 import json
@@ -90,6 +89,13 @@ def _get_newest_table_data(table_name):
 
 
 def update_table(table_name, table_data_str, encoding='utf-8'):
+    """
+    更新表，主要给系统接口用
+    :param table_name:
+    :param table_data_str:
+    :param encoding:
+    :return:
+    """
     path = _get_table_path(table_name)
     with open(path, 'w', encoding=encoding) as f:
         f.write(table_data_str)
@@ -98,7 +104,7 @@ def update_table(table_name, table_data_str, encoding='utf-8'):
 
 def get_table(table_name):
     """
-    Get the whole table data
+    获取整个表数据
     :param table_name:
     :return:
     """
@@ -107,7 +113,7 @@ def get_table(table_name):
 
 def get_rows(table_name, index_name, index_value):
     """
-    Get all rows by query
+    获取能够匹配的所有行
     :param table_name:
     :param index_name:
     :param index_value:
@@ -122,7 +128,7 @@ def get_rows(table_name, index_name, index_value):
 
 def get_row(table_name, index_name, index_value):
     """
-    Get 1 row
+    获取1行
     :param table_name:
     :param index_name:
     :param index_value:
@@ -139,7 +145,7 @@ def get_row(table_name, index_name, index_value):
 
 def get_cell(table_name, index_name, index_value, query_column):
     """
-    Get data of a cell(grid)
+    获取一个格子的内容
     :param table_name:
     :param index_name:
     :param index_value:

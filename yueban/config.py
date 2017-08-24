@@ -105,3 +105,8 @@ def get_cms_url():
 def get_csv_dir():
     return _config['csv_dir']
 
+
+def get_log_dir():
+    return _config['log_dir']
+
+

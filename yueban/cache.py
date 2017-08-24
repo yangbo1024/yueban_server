@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-Cache service: supply redis access
+redis访问
 """
 
 import aioredis
@@ -11,8 +11,10 @@ from . import config
 _redis_pool = None
 
 
+# 以SYS_KEY_PREFIX开头的key，是系统保留key
 SYS_KEY_PREFIX = '_yueban'
 LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
+LOG_PREFIX = '{0}:log'.format(SYS_KEY_PREFIX)
 
 
 def make_key(*fields):
@@ -44,7 +46,7 @@ def get_connection_pool():
 
 # class Lock(object):
 #     """
-#     !! Do not use as possible as you can
+#     效率低，弃用
 #
 #     usage:
 #         async with Lock(lock_resource_name, timeout_seconds) as lock:
