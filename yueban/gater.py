@@ -156,7 +156,7 @@ async def _recv_routine(client_obj, ws):
             elif msg.type == web.WSMsgType.ERROR:
                 remove_client(client_id)
                 await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
-                log_error('msg error', client_id)
+                log_error('msg error', client_id, msg.data, msg.extra)
                 break
             else:
                 log_error("bad msg:", msg, msg.type)

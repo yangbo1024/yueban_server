@@ -83,4 +83,5 @@ async def clear():
             log_file.close()
         except:
             pass
+    _log_files.clear()
 
