@@ -296,8 +296,10 @@ def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
+    log_dir = config.get_log_dir()
     log_name = '{0}.log'.format(gate_id)
-    init_log(log_name)
+    log_path = os.path.join(log_dir, log_name)
+    init_log(log_path)
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']
