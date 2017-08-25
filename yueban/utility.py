@@ -10,10 +10,10 @@ import pickle
 import json
 from aiohttp import web
 import datetime
-from . import communicate
 import os
 import os.path
 import asyncio
+import base64
 
 
 def simple_crypt(bs):
@@ -99,7 +99,7 @@ def cmp_version(v1, v2):
 
 def format_time(sec, day_str='天', hour_str='小时', minute_str='分', second_str='秒'):
     """
-    Countdown-Left time format
+    日期显示格式化
     :param sec:
     :param day_str:
     :param hour_str:
@@ -126,12 +126,14 @@ def format_time(sec, day_str='天', hour_str='小时', minute_str='分', second_
     return s
 
 
-def gen_uniq_id():
+def gen_uniq_id(encoding='utf-8'):
     """
-    Universal id
-    :return:
+    全局唯一ID
+    :return: 字符串
     """
-    return str(uuid.uuid1())
+    bs = uuid.uuid1().bytes
+    uniq_id = base64.standard_b64encode(bs)
+    return str(uniq_id, encoding)
 
 
 def dumps(obj):
@@ -204,6 +206,7 @@ class Lock(object):
         self.timeout = timeout
 
     async def __aenter__(self):
+        from . import communicate
         fu = communicate.post_scheduler('/yueban/lock', [self.lock_name])
         sh = asyncio.shield(fu)
         try:
@@ -215,4 +218,5 @@ class Lock(object):
             return None
 
     async def __aexit__(self, exc_type, exc, tb):
+        from . import communicate
         return await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
