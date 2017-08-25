@@ -25,7 +25,12 @@ async def _get_log_file(category):
         f = open(path, 'a', buffering=1)
         _log_files[category] = f
         return f
-    stat_info = os.stat(path)
+    try:
+        stat_info = os.stat(path)
+    except FileNotFoundError:
+        f = open(path, 'a', buffering=1)
+        _log_files[category] = f
+        return
     mdt = datetime.fromtimestamp(stat_info.st_mtime)
     now = datetime.now()
     # 跨天
@@ -37,9 +42,8 @@ async def _get_log_file(category):
         dst = '{0}.{1}'.format(path, postfix)
         log_key = cache.make_key(cache.LOG_PREFIX, postfix)
         redis = cache.get_connection_pool()
-        # 香农定理，不解释
         expire = 2 * 86400 + 1
-        ok = redis.set(log_key, postfix, expire=expire, exist=redis.SET_IF_NOT_EXIST)
+        ok = await redis.set(log_key, postfix, expire=expire, exist=redis.SET_IF_NOT_EXIST)
         if ok:
             shutil.move(src, dst)
         f = open(src, 'a', buffering=1)
@@ -71,4 +75,12 @@ async def error(category, *args):
 async def initialize():
     log_dir = config.get_log_dir()
     utility.ensure_directory(log_dir)
+
+
+async def clear():
+    for _, log_file in _log_files.items():
+        try:
+            log_file.close()
+        except:
+            pass
 

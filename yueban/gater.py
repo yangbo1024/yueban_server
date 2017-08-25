@@ -23,10 +23,14 @@ import os.path
 import logging.handlers
 
 
+C2S_HEART_BEAT = 1003
+S2C_HEART_BEAT = 1003
+
+
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
-_logger = None
+_logger = globals().setdefault('_logger')
 
 
 class Client(object):
@@ -135,7 +139,16 @@ async def _recv_routine(client_obj, ws):
             msg = await ws.receive()
             if msg.type == web.WSMsgType.BINARY:
                 proto_id, proto_object = _unpack(msg.data)
-                await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
+                # 心跳协议直接在网关处理
+                if proto_id == C2S_HEART_BEAT:
+                    q = client_obj.send_queue
+                    proto_body = {
+                        'time': time.time(),
+                    }
+                    hb_rep = _pack(S2C_HEART_BEAT, proto_body)
+                    q.put_nowait(hb_rep)
+                else:
+                    await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
             elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
                 remove_client(client_id)
                 await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
