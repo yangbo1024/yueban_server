@@ -40,7 +40,8 @@ template:
     "game_url": "http://10.0.30.26:13020",
     "ums_url": "http://10.0.30.26:13030",
     "cms_url": "http://10.0.30.26:13040",
-    "csv_dir": "csv_table"
+    "csv_dir": "csv_table",
+    "log_dir": "logs"
 }
 """
 
