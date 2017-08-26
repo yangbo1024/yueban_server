@@ -167,14 +167,10 @@ async def initialize():
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
     _recv_redis = await cache.create_cache_connection()
-
-
-async def start(output=True):
-    global _web_app
-    global _output_schedule
-    _output_schedule = output
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(initialize())
     asyncio.ensure_future(_loop_brpop())
+
+
+async def start():
+    global _web_app
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
