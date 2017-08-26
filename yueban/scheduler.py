@@ -66,7 +66,7 @@ async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, url, args = msg
-    log_info('schedule', seconds, url, args)
+    await log_info('schedule', seconds, url, args)
     asyncio.ensure_future(_future(seconds, url, args))
     return utility.pack_pickle_response('')
 
@@ -97,7 +97,7 @@ async def _lock_handler(request):
     await lock_obj.recv_queue.get()
     used_time = time.time() - begin
     _check_remove_queue(lock_key)
-    log_info('lock', lock_key, used_time)
+    await log_info('lock', lock_key, used_time)
     return utility.pack_pickle_response(0)
 
 
@@ -107,7 +107,7 @@ async def _unlock_handler(request):
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
-    log_info('unlock', lock_key)
+    await log_info('unlock', lock_key)
     return utility.pack_pickle_response(0)
 
 
@@ -122,7 +122,7 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    log_info('hotfix', result)
+    await log_info('hotfix', result)
     return utility.pack_pickle_response(result)
 
 
@@ -147,7 +147,7 @@ async def _loop_brpop():
         try:
             msg = await _recv_redis.brpop(_channel_id)
             if not msg:
-                log_error('receive empty msg', _channel_id)
+                await log_error('receive empty msg', _channel_id)
                 continue
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
@@ -155,7 +155,7 @@ async def _loop_brpop():
             lock_obj.recv_queue.put_nowait(1)
         except Exception as e:
             import traceback
-            log_error('loop_brpop error', e, traceback.format_exc())
+            await log_error('loop_brpop error', e, traceback.format_exc())
 
 
 async def initialize():
@@ -163,7 +163,7 @@ async def initialize():
     global _send_redis
     global _recv_redis
     _channel_id = utility.gen_uniq_id()
-    log_info('loop_rpop_channel', _channel_id)
+    await log_info('loop_rpop_channel', _channel_id)
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
     _recv_redis = await cache.create_cache_connection()
