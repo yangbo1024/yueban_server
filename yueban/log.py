@@ -4,6 +4,7 @@
 日志函数
 需要用到日志的地方，需要先初始化cache
 每个日志文件以category命名，按日切割
+注意category要全局唯一，如果多个master进程部署，每个部署的服务不能共享同样的category
 """
 
 from . import utility
@@ -40,13 +41,13 @@ async def _get_log_file(category):
         src = path
         postfix = mdt.strftime('%Y%m%d')
         dst = '{0}.{1}'.format(path, postfix)
-        log_key = cache.make_key(cache.LOG_PREFIX, postfix)
+        log_key = cache.make_key(cache.LOG_PREFIX, category, postfix)
         redis = cache.get_connection_pool()
         expire = 2 * 86400 + 1
         ok = await redis.set(log_key, postfix, expire=expire, exist=redis.SET_IF_NOT_EXIST)
         if ok:
             shutil.move(src, dst)
-        f = open(src, 'a', buffering=1)
+        f = open(path, 'a', buffering=1)
         _log_files[category] = f
     return _log_files[category]
 
