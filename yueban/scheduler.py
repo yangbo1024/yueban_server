@@ -39,11 +39,11 @@ class Lock(object):
         self.recv_queue = asyncio.PriorityQueue()
 
 
-_web_app = globals().setdefault('_web_app')
-_channel_id = globals().setdefault('_channel_id', '')
-_locks = globals().setdefault('_locks', {})
-_send_redis = globals().setdefault('_send_redis')
-_recv_redis = globals().setdefault('_recv_redis')
+_web_app = None
+_channel_id = ''
+_locks = {}
+_send_redis = None
+_recv_redis = None
 
 
 async def _future(seconds, url, args):
@@ -153,7 +153,8 @@ async def initialize():
     global _recv_redis
     _channel_id = utility.gen_uniq_id()
     utility.print_out('loop_rpop_channel', _channel_id)
-    _send_redis = await cache.create_cache_connection()
+    await cache.initialize()
+    _send_redis = cache.get_connection_pool()
     _recv_redis = await cache.create_cache_connection()
 
 
