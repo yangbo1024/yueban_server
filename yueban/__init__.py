@@ -26,7 +26,7 @@ import json
 from . import config
 
 
-__version__ = '1.3.5'
+__version__ = '1.3.6'
 
 
 async def initialize(cfg):

@@ -13,8 +13,8 @@ from aiohttp import web
 from . import utility
 from . import communicate
 from . import cache
-import yueban
 import time
+from yueban import log
 
 
 LOCK_SCRIPT = """
@@ -33,6 +33,9 @@ end
 """
 
 
+LOG_CATEGORY = 'yueban_schdule'
+
+
 class Lock(object):
     def __init__(self):
         self.send_queue = asyncio.PriorityQueue()
@@ -46,6 +49,14 @@ _send_redis = None
 _recv_redis = None
 
 
+async def log_info(*args):
+    await log.info(LOG_CATEGORY, *args)
+
+
+async def log_error(*args):
+    await log.error(LOG_CATEGORY, *args)
+
+
 async def _future(seconds, url, args):
     await asyncio.sleep(seconds)
     await communicate.post(url, args)
@@ -55,7 +66,7 @@ async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, url, args = msg
-    utility.print_out('schedule', seconds, url, args)
+    log_info('schedule', seconds, url, args)
     asyncio.ensure_future(_future(seconds, url, args))
     return utility.pack_pickle_response('')
 
@@ -86,7 +97,7 @@ async def _lock_handler(request):
     await lock_obj.recv_queue.get()
     used_time = time.time() - begin
     _check_remove_queue(lock_key)
-    utility.print_out('lock', lock_key, used_time)
+    log_info('lock', lock_key, used_time)
     return utility.pack_pickle_response(0)
 
 
@@ -96,7 +107,7 @@ async def _unlock_handler(request):
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
-    utility.print_out('unlock', lock_key)
+    log_info('unlock', lock_key)
     return utility.pack_pickle_response(0)
 
 
@@ -111,7 +122,7 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    utility.print_out('hotfix', result)
+    log_info('hotfix', result)
     return utility.pack_pickle_response(result)
 
 
@@ -136,7 +147,7 @@ async def _loop_brpop():
         try:
             msg = await _recv_redis.brpop(_channel_id)
             if not msg:
-                utility.print_out('receive empty msg', _channel_id)
+                log_error('receive empty msg', _channel_id)
                 continue
             lock_key = msg[1]
             lock_key = str(lock_key, 'utf8')
@@ -144,7 +155,7 @@ async def _loop_brpop():
             lock_obj.recv_queue.put_nowait(1)
         except Exception as e:
             import traceback
-            utility.print_out('loop_brpop error', e, traceback.format_exc())
+            log_error('loop_brpop error', e, traceback.format_exc())
 
 
 async def initialize():
@@ -152,7 +163,7 @@ async def initialize():
     global _send_redis
     global _recv_redis
     _channel_id = utility.gen_uniq_id()
-    utility.print_out('loop_rpop_channel', _channel_id)
+    log_info('loop_rpop_channel', _channel_id)
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
     _recv_redis = await cache.create_cache_connection()
@@ -162,7 +173,6 @@ async def start(output=True):
     global _web_app
     global _output_schedule
     _output_schedule = output
-    yueban.initialize_with_file()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(initialize())
     asyncio.ensure_future(_loop_brpop())
