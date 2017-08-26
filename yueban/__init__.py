@@ -26,15 +26,15 @@ import json
 from . import config
 
 
-__version__ = '1.3.2'
+__version__ = '1.3.4'
 
 
-def initialize(cfg):
+async def initialize(cfg):
     config.set_config(cfg)
 
 
-def initialize_with_file(file_path='yueban.conf'):
+async def initialize_with_file(file_path='yueban.conf'):
     with open(file_path) as f:
         s = f.read()
         cfg = json.loads(s)
-        initialize(cfg)
+        await initialize(cfg)

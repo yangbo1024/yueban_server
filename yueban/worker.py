@@ -236,7 +236,11 @@ def get_web_app():
     return _web_app
 
 
-def start(app):
+def get_worker_app():
+    return _worker_app
+
+
+async def start(app):
     global _worker_app
     global _web_app
     if not isinstance(app, _BaseWorker):

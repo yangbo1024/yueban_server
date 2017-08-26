@@ -157,7 +157,7 @@ async def initialize():
     _recv_redis = await cache.create_cache_connection()
 
 
-def start(output=True):
+async def start(output=True):
     global _web_app
     global _output_schedule
     _output_schedule = output
