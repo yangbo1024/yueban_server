@@ -10,7 +10,7 @@ template:
         "password": "yj123456789.",
         "db": 0,
         "minsize": 1,
-        "maxsize": 2
+        "maxsize": 1
     },
     "data_mongodb": {
         "host": "10.0.30.26",
@@ -18,7 +18,9 @@ template:
         "password": "yj123456789.",
         "user": "game_yydz_mongodb",
         "db": "game_yydz",
-        "replicaset": ""
+        "replicaset": "",
+        "min_pool_size": 2,
+        "max_pool_size": 5
     },
     "stat_mongodb": {
         "host": "10.0.30.26",
@@ -26,10 +28,13 @@ template:
         "password": "yj123456789.",
         "user": "game_yydz_mongodb",
         "db": "game_yydz",
-        "replicaset": ""
+        "replicaset": "",
+        "min_pool_size": 2,
+        "max_pool_size": 5
     },
     "gaters": {
         "huanan_1": {
+            "id": "huanan_1",
             "host": "10.0.30.26",
             "port": 13100,
             "url": "http://10.0.30.26:13100",

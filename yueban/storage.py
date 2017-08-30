@@ -15,8 +15,8 @@ _data_db_conn = None
 _stat_db_conn = None
 
 
-async def create_connection(host, port, database, user, password, replicaset=''):
-    client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset)
+async def create_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):
+    client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset, minPoolSize=min_pool_size, maxPoolSize=max_pool_size)
     db = client[database]
     await db.authenticate(user, password)
     return db
@@ -30,7 +30,9 @@ async def create_data_connection():
     user = cfg['user']
     db = cfg['db']
     replicaset = cfg['replicaset']
-    return await create_connection(host, port, db, user, password, replicaset)
+    min_pool_size = cfg['min_pool_size']
+    max_pool_size = cfg['max_pool_size']
+    return await create_connection(host, port, db, user, password, replicaset, min_pool_size, max_pool_size)
 
 
 async def initialize_data():
@@ -46,7 +48,9 @@ async def create_stat_connection():
     user = cfg['user']
     db = cfg['db']
     replicaset = cfg['replicaset']
-    return await create_connection(host, port, db, user, password, replicaset)
+    min_pool_size = cfg['min_pool_size']
+    max_pool_size = cfg['max_pool_size']
+    return await create_connection(host, port, db, user, password, replicaset, min_pool_size, max_pool_size)
 
 
 async def initialize_stat():
