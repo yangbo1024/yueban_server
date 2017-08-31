@@ -8,48 +8,54 @@
 """
 
 from . import utility
-from . import cache
 from . import config
 from datetime import datetime
 import os
-import shutil
+
+
+class LogFile(object):
+    def __init__(self, mdt, f):
+        self.mdt = mdt
+        self.f = f
 
 
 _log_files = {}
+
+
+def _create_file_obj(path, mdt):
+    f = open(path, 'a', buffering=1)
+    file_obj = LogFile(mdt, f)
+    return file_obj
 
 
 async def _get_log_file(category):
     log_dir = config.get_log_dir()
     path = os.path.join(log_dir, category)
     path += '.log'
-    if category not in _log_files:
-        f = open(path, 'a', buffering=1)
-        _log_files[category] = f
-        return f
-    try:
-        stat_info = os.stat(path)
-    except FileNotFoundError:
-        f = open(path, 'a', buffering=1)
-        _log_files[category] = f
-        return
-    mdt = datetime.fromtimestamp(stat_info.st_mtime)
     now = datetime.now()
+    if category not in _log_files:
+        try:
+            stat_info = os.stat(path)
+            mdt = datetime.fromtimestamp(stat_info.st_mtime)
+        except FileNotFoundError:
+            mdt = now
+        _log_files[category] = _create_file_obj(path, mdt)
+    file_obj = _log_files[category]
+    mdt = file_obj.mdt
     # 跨天
     if mdt.day != now.day:
-        f = _log_files[category]
-        f.close()
         src = path
         postfix = mdt.strftime('%Y%m%d')
         dst = '{0}.{1}'.format(path, postfix)
-        log_key = cache.make_key(cache.LOG_PREFIX, category, postfix)
-        redis = cache.get_connection_pool()
-        expire = 2 * 86400 + 1
-        ok = await redis.set(log_key, postfix, expire=expire, exist=redis.SET_IF_NOT_EXIST)
-        if ok:
-            shutil.move(src, dst)
-        f = open(path, 'a', buffering=1)
-        _log_files[category] = f
-    return _log_files[category]
+        if not os.path.exists(dst):
+            try:
+                os.rename(src, dst)
+            except Exception as e:
+                utility.print_out('rename error', e, category)
+        file_obj.f.close()
+        file_obj = _create_file_obj(src, now)
+        _log_files[category] = file_obj
+    return file_obj.f
 
 
 async def _log(category, log_type, *args):

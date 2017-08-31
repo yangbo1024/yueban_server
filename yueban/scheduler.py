@@ -162,7 +162,8 @@ async def initialize():
     global _channel_id
     global _send_redis
     global _recv_redis
-    _channel_id = utility.gen_uniq_id()
+    uniq_id = utility.gen_uniq_id()
+    _channel_id = cache.make_key(cache.SYS_KEY_PREFIX, uniq_id)
     await log_info('loop_rpop_channel', _channel_id)
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
