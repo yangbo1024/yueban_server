@@ -51,7 +51,7 @@ async def _get_log_file(category):
             try:
                 os.rename(src, dst)
             except Exception as e:
-                utility.print_out('rename error', e, category)
+                utility.print_out('rename error', src, dst, e, category)
         file_obj.f.close()
         file_obj = _create_file_obj(src, now)
         _log_files[category] = file_obj

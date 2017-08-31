@@ -127,7 +127,7 @@ async def _send_routine(client_obj, ws):
                 # only in _remove_client can be None
                 log_info('send_queue_none', client_id)
                 break
-            ws.send_bytes(msg)
+            await ws.send_bytes(msg)
         except Exception as e:
             log_error('send_routine_error', client_id, e, traceback.format_exc())
 
@@ -149,17 +149,10 @@ async def _recv_routine(client_obj, ws):
                     q.put_nowait(hb_rep)
                 else:
                     await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
-            elif msg.type in (web.WSMsgType.CLOSE, web.WSMsgType.CLOSING, web.WSMsgType.CLOSED):
-                remove_client(client_id)
-                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
-                break
-            elif msg.type == web.WSMsgType.ERROR:
-                remove_client(client_id)
-                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
-                log_error('msg error', client_id, msg, ws.exception, ws.close_code)
-                break
             else:
-                log_error("bad msg:", msg, msg.type)
+                remove_client(client_id)
+                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
+                break
         except Exception as e:
             log_error('recv_routine_error', client_id, e, traceback.format_exc())
 
