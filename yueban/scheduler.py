@@ -35,6 +35,8 @@ end
 
 LOG_CATEGORY = 'yueban_schdule'
 
+_slow_log_time = 0.1
+
 
 class Lock(object):
     def __init__(self):
@@ -57,16 +59,32 @@ async def log_error(*args):
     await log.error(LOG_CATEGORY, *args)
 
 
+def set_slow_log_time(seconds):
+    global _slow_log_time
+    _slow_log_time = max(seconds, 0)
+
+
+def get_slow_log_time():
+    return _slow_log_time
+
+
 async def _future(seconds, url, args):
     await asyncio.sleep(seconds)
-    await communicate.post(url, args)
+    try:
+        begin = time.time()
+        await communicate.post(url, args)
+        used_time = time.time() - begin
+        if used_time >= _slow_log_time:
+            await log.info('slow_schedule_post', used_time, url, args)
+    except Exception as e:
+        import traceback
+        await log_error('sche_error', url, args, e, traceback.format_exc())
 
 
 async def _schedule_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     seconds, url, args = msg
-    await log_info('schedule', seconds, url, args)
     asyncio.ensure_future(_future(seconds, url, args))
     return utility.pack_pickle_response('')
 
@@ -86,28 +104,32 @@ def _check_remove_queue(lock_key):
 
 
 async def _lock_handler(request):
+    begin = time.time()
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    begin = time.time()
     lock_obj = _ensure_get_lock(lock_key)
     lock_obj.send_queue.put_nowait(1)
     await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
     await lock_obj.recv_queue.get()
-    used_time = time.time() - begin
     _check_remove_queue(lock_key)
-    await log_info('lock', lock_key, used_time)
+    used_time = time.time() - begin
+    if used_time >= _slow_log_time:
+        await log.info('slow_lock', _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
 async def _unlock_handler(request):
+    begin = time.time()
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
-    await log_info('unlock', lock_key)
+    used_time = time.time() - begin
+    if used_time >= _slow_log_time:
+        await log.info('slow_unlock', _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
@@ -133,13 +155,17 @@ def get_web_app():
 async def _yueban_handler(request):
     path = request.path
     if path == '/yueban/schedule':
-        return await _schedule_handler(request)
+        ret = await _schedule_handler(request)
     elif path == '/yueban/lock':
-        return await _lock_handler(request)
+        ret = await _lock_handler(request)
     elif path == '/yueban/unlock':
-        return await _unlock_handler(request)
+        ret = await _unlock_handler(request)
     elif path == '/yueban/hotfix':
-        return await _hotfix_handler(request)
+        ret = await _hotfix_handler(request)
+    else:
+        ret = {}
+        await log_error('bad_request_path', path)
+    return ret
 
 
 async def _loop_brpop():
