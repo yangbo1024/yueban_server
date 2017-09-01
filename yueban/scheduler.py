@@ -14,7 +14,7 @@ from . import utility
 from . import communicate
 from . import cache
 import time
-from yueban import log
+from yueban import log as yueban_log
 
 
 LOCK_SCRIPT = """
@@ -52,11 +52,11 @@ _recv_redis = None
 
 
 async def log_info(*args):
-    await log.info(LOG_CATEGORY, *args)
+    await yueban_log.info(LOG_CATEGORY, *args)
 
 
 async def log_error(*args):
-    await log.error(LOG_CATEGORY, *args)
+    await yueban_log.error(LOG_CATEGORY, *args)
 
 
 def set_slow_log_time(seconds):
@@ -75,7 +75,7 @@ async def _future(seconds, url, args):
         await communicate.post(url, args)
         used_time = time.time() - begin
         if used_time >= _slow_log_time:
-            await log.info('slow_schedule_post', used_time, url, args)
+            await log_info('slow_schedule_post', used_time, url, args)
     except Exception as e:
         import traceback
         await log_error('sche_error', url, args, e, traceback.format_exc())
@@ -116,7 +116,7 @@ async def _lock_handler(request):
     _check_remove_queue(lock_key)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
-        await log.info('slow_lock', _channel_id, msg)
+        await log_info('slow_lock', _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
@@ -129,7 +129,7 @@ async def _unlock_handler(request):
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
-        await log.info('slow_unlock', _channel_id, msg)
+        await log_info('slow_unlock', _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
