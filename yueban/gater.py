@@ -148,10 +148,10 @@ async def _recv_routine(client_obj, ws):
                     hb_rep = _pack(S2C_HEART_BEAT, proto_body)
                     q.put_nowait(hb_rep)
                 else:
-                    await communicate.post_game('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
+                    await communicate.post_worker('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
             else:
                 remove_client(client_id)
-                await communicate.post_game('/yueban/client_closed', [_gate_id, client_id])
+                await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
                 break
         except Exception as e:
             log_error('recv_routine_error', client_id, e, traceback.format_exc())

@@ -44,7 +44,7 @@ async def post_scheduler(path, args):
     return await post(url, args)
 
 
-async def post_game(path, args):
-    base_url = config.get_game_url()
+async def post_worker(path, args):
+    base_url = config.get_worker_url()
     url = '{0}{1}'.format(base_url, path)
     return await post(url, args)
