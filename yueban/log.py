@@ -13,6 +13,9 @@ from datetime import datetime
 import os
 
 
+LOG_FILE_POSTFIX = ".log"
+
+
 class LogFile(object):
     def __init__(self, mdt, f):
         self.mdt = mdt
@@ -31,7 +34,7 @@ def _create_file_obj(path, mdt):
 async def _get_log_file(category):
     log_dir = config.get_log_dir()
     path = os.path.join(log_dir, category)
-    path += '.log'
+    path += LOG_FILE_POSTFIX
     now = datetime.now()
     if category not in _log_files:
         try:
@@ -51,7 +54,7 @@ async def _get_log_file(category):
             try:
                 os.rename(src, dst)
             except Exception as e:
-                utility.print_out('rename error', src, dst, e, category)
+                utility.print_out('rename log error', src, dst, e, category)
         file_obj.f.close()
         file_obj = _create_file_obj(src, now)
         _log_files[category] = file_obj
@@ -85,10 +88,12 @@ async def initialize():
 
 
 async def clear():
-    for _, log_file in _log_files.items():
+    for category, log_file in _log_files.items():
         try:
             log_file.close()
-        except:
-            pass
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            utility.print_out('clear log error', category, e, tb)
     _log_files.clear()
 
