@@ -137,7 +137,7 @@ async def get_clients_of_all_gaters():
     return await communicate.post_all_gaters('/yueban/get_all_clients', [])
 
 
-async def call_later(seconds, path, args):
+async def call_later(seconds, args):
     """
     延时调用，可以调用不同地址的其它worker
     :param seconds:
