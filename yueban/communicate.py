@@ -48,15 +48,3 @@ async def post_game(path, args):
     base_url = config.get_game_url()
     url = '{0}{1}'.format(base_url, path)
     return await post(url, args)
-
-
-async def post_ums(path, args):
-    base_url = config.get_ums_url()
-    url = '{0}{1}'.format(base_url, path)
-    return await post(url, args)
-
-
-async def post_cms(path, args):
-    base_url = config.get_cms_url()
-    url = '{0}{1}'.format(base_url, path)
-    return await post(url, args)

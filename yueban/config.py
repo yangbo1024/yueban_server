@@ -42,11 +42,10 @@ template:
         }
     },
     "scheduler_url": "http://10.0.30.26:13010",
-    "game_url": "http://10.0.30.26:13020",
-    "ums_url": "http://10.0.30.26:13030",
-    "cms_url": "http://10.0.30.26:13040",
+    "worker_url": "http://10.0.30.26:13020",
     "csv_dir": "csv_table",
-    "log_dir": "logs"
+    "log_dir": "logs",
+    "password": "Yueban1234"
 }
 """
 
@@ -96,16 +95,8 @@ def get_scheduler_url():
     return _config['scheduler_url']
 
 
-def get_game_url():
-    return _config['game_url']
-
-
-def get_ums_url():
-    return _config['ums_url']
-
-
-def get_cms_url():
-    return _config['cms_url']
+def get_worker_url():
+    return _config['worker_url']
 
 
 def get_csv_dir():
@@ -115,4 +106,7 @@ def get_csv_dir():
 def get_log_dir():
     return _config['log_dir']
 
+
+def get_password():
+    return _config['password']
 

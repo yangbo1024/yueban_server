@@ -25,10 +25,6 @@ class ProtocolMessage(object):
         self.proto_body = proto_body
 
     async def get_client_info(self):
-        """
-        Get information of the client
-        :return: {"host": ip_or_host, ...}
-        """
         ret = await communicate.post_gater(self.gate_id, '/yueban/get_client_info', [self.client_id])
         return ret
 
@@ -38,42 +34,21 @@ class ProtocolMessage(object):
         )
 
 
-class _BaseWorker(object, metaclass=ABCMeta):
+class Worker(object, metaclass=ABCMeta):
     @abstractmethod
     async def on_call(self, request):
         pass
 
+    @abstractmethod
     async def on_schedule(self, args):
-        s = '{0}:{1}'.format('Undesirable schedule', args)
-        raise RuntimeError(s)
+        pass
 
-
-class UMSWorker(_BaseWorker):
-    pass
-
-
-class CMSWorker(_BaseWorker):
-    pass
-
-
-class GameWorker(_BaseWorker):
     @abstractmethod
     async def on_proto(self, message):
-        """
-        Called when received a proto of a client
-        :param message: A ProtocolMessage object
-        :return:
-        """
         pass
 
     @abstractmethod
     async def on_client_closed(self, gate_id, client_id):
-        """
-        Called when a client shut the connection
-        :param gate_id:
-        :param client_id:
-        :return:
-        """
         pass
 
 
@@ -107,75 +82,34 @@ async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
 
 
 async def unicast(gate_id, client_id, proto_id, proto_body):
-    """
-    Send to one client
-    :param gate_id:
-    :param client_id:
-    :param proto_id:
-    :param proto_body:
-    :return:
-    """
     await _send_to_gate(gate_id, [client_id], proto_id, proto_body)
 
 
 async def multicast(gate_id, client_ids, proto_id, proto_body):
-    """
-    Send to multiple clients
-    :param gate_id:
-    :param client_ids:
-    :param proto_id:
-    :param proto_body:
-    :return:
-    """
     if not client_ids:
         return
-    if type(client_ids) not in (list, tuple, set):
-        raise TypeError('multicast client_ids type error')
+    client_ids = list(client_ids)
     await _send_to_gate(gate_id, client_ids, proto_id, proto_body)
 
 
 async def multicast_ex(client_ids, proto_id, proto_body):
-    """
-    Send to all gates of clients
-    :param client_ids:
-    :param proto_id:
-    :param proto_body:
-    :return:
-    """
     if not client_ids:
         return
-    if type(client_ids) not in (list, tuple, set):
-        raise TypeError('multicast client_ids type error')
+    client_ids = list(client_ids)
     await communicate.post_all_gaters('/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def broadcast(proto_id, proto_body):
-    """
-    Send to all clients
-    :param proto_id:
-    :param proto_body:
-    :return:
-    """
     await communicate.post_all_gaters('/yueban/proto', [[], proto_id, proto_body])
 
 
 async def close_clients(client_ids):
-    """
-    Close some clients
-    :param client_ids:
-    :return:
-    """
     if not client_ids:
         return
     return await communicate.post_all_gaters('/yueban/close_client', client_ids)
 
 
 async def close_client(client_id):
-    """
-    Close only 1 client
-    :param client_id:
-    :return:
-    """
     return await close_clients([client_id])
 
 
@@ -203,33 +137,17 @@ async def get_clients_of_all_gaters():
     return await communicate.post_all_gaters('/yueban/get_all_clients', [])
 
 
-async def call_later(seconds, url, args):
+async def call_later(seconds, path, args):
     """
-    Call a method after some seconds with args
-    :param seconds: float or int
+    延时调用，可以调用不同地址的其它worker
+    :param seconds:
     :param url:
     :param args:
     :return:
     """
+    base_url = config.get_worker_url()
+    url = base_url + '/yueban/on_schedule'
     return await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])
-
-
-async def call_game_later(seconds, args):
-    game_url = config.get_game_url()
-    url = game_url + '/yueban/on_schedule'
-    return await call_later(seconds, url, args)
-
-
-async def call_ums_later(seconds, args):
-    ums_url = config.get_ums_url()
-    url = ums_url + '/yueban/on_schedule'
-    return await call_later(seconds, url, args)
-
-
-async def call_cms_later(seconds, args):
-    cms_url = config.get_cms_url()
-    url = cms_url + '/yueban/on_schedule'
-    return await call_later(seconds, url, args)
 
 
 def get_web_app():
@@ -243,7 +161,7 @@ def get_worker_app():
 async def start(app):
     global _worker_app
     global _web_app
-    if not isinstance(app, _BaseWorker):
+    if not isinstance(app, Worker):
         raise TypeError("bad worker instance type")
     _worker_app = app
     _web_app = web.Application()
