@@ -16,17 +16,21 @@ _web_app = None
 
 
 class ProtocolMessage(object):
-    __slots__ = ['gate_id', 'client_id', 'proto_id', 'proto_body']
+    __slots__ = ['gate_id', 'client_id', 'proto_id', 'proto_body', '_client_info']
 
     def __init__(self, gate_id, client_id, proto_id, proto_body):
         self.gate_id = gate_id
         self.client_id = client_id
         self.proto_id = proto_id
         self.proto_body = proto_body
+        self._client_info = None
 
     async def get_client_info(self):
+        if self._client_info is not None:
+            return self._client_info
         ret = await communicate.post_gater(self.gate_id, '/yueban/get_client_info', [self.client_id])
-        return ret
+        self._client_info = ret[self.client_id]
+        return self._client_info
 
     def __str__(self):
         return 'ProtocolMessage(gate_id={0},client_id={1},proto_id={2},proto_body={3}'.format(
