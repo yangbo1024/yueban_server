@@ -26,10 +26,14 @@ class ProtocolMessage(object):
         self._client_info = None
 
     async def get_client_info(self):
+        """
+        返回一个字典，里面包含客户端响应的信息
+        :return: {host: ip_or_host}
+        """
         if self._client_info is not None:
             return self._client_info
         ret = await communicate.post_gater(self.gate_id, '/yueban/get_client_info', [self.client_id])
-        self._client_info = ret[self.client_id]
+        self._client_info = ret.get(self.client_id, {})
         return self._client_info
 
     def __str__(self):
