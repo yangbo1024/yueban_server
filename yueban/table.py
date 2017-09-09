@@ -48,10 +48,14 @@ def _load_table_data(path):
         for i, row in enumerate(reader):
             if i == 0:
                 for col in row:
-                    tp_begin = col.index('(')
-                    tp_end = col.index(')')
-                    header = col[:tp_begin]
-                    tp_func = col[tp_begin+1:tp_end]
+                    tp_begin = col.find('(')
+                    tp_end = col.find(')')
+                    if tp_begin < 0:
+                        header = col
+                        tp_func = 'str'
+                    else:
+                        header = col[:tp_begin]
+                        tp_func = col[tp_begin+1:tp_end]
                     headers.append(header)
                     type_funcs.append(tp_func)
             else:
@@ -85,7 +89,7 @@ def _get_newest_table_data(table_name):
                 _cached_tables[table_name] = table_data
             return table_data
     except Exception as e:
-        utility.print_out(e, traceback.format_exc())
+        utility.print_out(table_name, e, traceback.format_exc())
 
 
 def update_table(table_name, table_data_str, encoding='utf-8'):
