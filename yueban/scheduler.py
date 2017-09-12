@@ -116,7 +116,7 @@ async def _lock_handler(request):
     _check_remove_queue(lock_key)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
-        await log_info('slow_lock', _channel_id, msg)
+        await log_info('slow_lock', used_time, _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
@@ -129,7 +129,7 @@ async def _unlock_handler(request):
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
-        await log_info('slow_unlock', _channel_id, msg)
+        await log_info('slow_unlock', used_time, _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
