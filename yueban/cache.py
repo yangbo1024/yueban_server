@@ -25,9 +25,9 @@ async def create_connection(host, port, password, db):
     return await aioredis.create_redis_pool((host, port), db=db, password=password)
 
 
-async def create_cache_connection():
+async def create_connection_of_config():
     global _redis_pool
-    cfg = config.get_cache_redis_config()
+    cfg = config.get_redis_config()
     host = cfg['host']
     port = cfg['port']
     password = cfg['password']
@@ -37,7 +37,7 @@ async def create_cache_connection():
 
 async def initialize():
     global _redis_pool
-    _redis_pool = await create_cache_connection()
+    _redis_pool = await create_connection_of_config()
 
 
 def get_connection_pool():

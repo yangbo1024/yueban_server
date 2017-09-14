@@ -194,7 +194,7 @@ async def initialize():
     await log_info('loop_rpop_channel', _channel_id)
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
-    _recv_redis = await cache.create_cache_connection()
+    _recv_redis = await cache.create_connection_of_config()
     asyncio.ensure_future(_loop_brpop())
 
 
