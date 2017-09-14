@@ -146,13 +146,6 @@ async def get_clients_of_all_gaters():
 
 
 async def call_later(seconds, args):
-    """
-    延时调用，可以调用不同地址的其它worker
-    :param seconds:
-    :param url:
-    :param args:
-    :return:
-    """
     base_url = config.get_worker_url()
     url = base_url + '/yueban/on_schedule'
     return await communicate.post_scheduler('/yueban/schedule', [seconds, url, args])

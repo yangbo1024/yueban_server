@@ -17,10 +17,7 @@ from . import communicate
 from . import config
 import traceback
 import time
-import logging
-import os
-import os.path
-import logging.handlers
+from . import log
 
 
 C2S_HEART_BEAT = 1003
@@ -30,7 +27,6 @@ S2C_HEART_BEAT = 1003
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
-_logger = globals().setdefault('_logger')
 
 
 class Client(object):
@@ -47,34 +43,14 @@ class Client(object):
         self.create_time = int(time.time())
 
 
-def init_log(log_name):
-    global _logger
-    _logger = logging.getLogger('')
-    _logger.setLevel(logging.DEBUG)
-    formater = logging.Formatter("%(asctime)s %(message)s")
-    dir_name = os.path.dirname(log_name)
-    if dir_name and not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    handler = logging.handlers.TimedRotatingFileHandler(log_name, when="midnight")
-    handler.suffix = "%Y%m%d"
-    handler.setFormatter(formater)
-    _logger.addHandler(handler)
-
-
 def log_info(*args):
-    global _logger
-    if not args:
-        return
-    s = " ".join([str(arg) for arg in args])
-    _logger.info("INFO %s", s)
+    fu = log.info(_gate_id, *args)
+    asyncio.ensure_future(fu)
 
 
 def log_error(*args):
-    global _logger
-    if not args:
-        return
-    s = " ".join([str(arg) for arg in args])
-    _logger.info("ERROR %s", s)
+    fu = log.error(_gate_id, *args)
+    asyncio.ensure_future(fu)
 
 
 def _add_client(client_id, host, port):
@@ -285,14 +261,16 @@ async def _yueban_handler(request):
     return await handler(request)
 
 
+async def _initialize():
+    await log.initialize()
+
+
 def run(gate_id):
     global _web_app
     global _gate_id
     _gate_id = gate_id
-    log_dir = config.get_log_dir()
-    log_name = '{0}.log'.format(gate_id)
-    log_path = os.path.join(log_dir, log_name)
-    init_log(log_path)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_initialize())
     # web
     cfg = config.get_gate_config(gate_id)
     host = cfg['host']
