@@ -11,8 +11,7 @@ from motor import motor_asyncio
 from . import config
 
 
-_data_db_conn = None
-_stat_db_conn = None
+_db_conn = None
 
 
 async def create_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):
@@ -22,8 +21,8 @@ async def create_connection(host, port, database, user, password, replicaset='',
     return db
 
 
-async def create_data_connection():
-    cfg = config.get_data_mongo_config()
+async def create_connection():
+    cfg = config.get_mongodb_config()
     host = cfg['host']
     port = cfg['port']
     password = cfg['password']
@@ -35,33 +34,13 @@ async def create_data_connection():
     return await create_connection(host, port, db, user, password, replicaset, min_pool_size, max_pool_size)
 
 
-async def initialize_data():
-    global _data_db_conn
-    _data_db_conn = await create_data_connection()
-
-
-async def create_stat_connection():
-    cfg = config.get_stat_mongo_config()
-    host = cfg['host']
-    port = cfg['port']
-    password = cfg['password']
-    user = cfg['user']
-    db = cfg['db']
-    replicaset = cfg['replicaset']
-    min_pool_size = cfg['min_pool_size']
-    max_pool_size = cfg['max_pool_size']
-    return await create_connection(host, port, db, user, password, replicaset, min_pool_size, max_pool_size)
-
-
-async def initialize_stat():
+async def initialize():
     global _stat_db_conn
-    _stat_db_conn = await create_stat_connection()
+    _stat_db_conn = await create_connection()
 
 
-def get_data_conn():
-    return _data_db_conn
+def get_connection():
+    return _db_conn
 
 
-def get_stat_conn():
-    return _stat_db_conn
 

@@ -30,8 +30,7 @@ dig:
 
 数据库设计上为:
     一个redis做cache
-    一个mongodb做数据存储
-    一个mongodb数据库用于统计（非必须，且可与数据mongodb同库）
+    一个mongodb(副本集）做数据存储
 
 服务一共分为以下几类：
     1. gater
@@ -50,11 +49,10 @@ dig:
         文件日志，按日切割，每个category分别一个文件
 """
 
-import json
 from . import config
 
 
-__version__ = '1.6.2'
+__version__ = '1.6.4'
 
 
 async def initialize(cfg):
@@ -62,7 +60,4 @@ async def initialize(cfg):
 
 
 async def initialize_with_file(file_path='yueban.conf'):
-    with open(file_path) as f:
-        s = f.read()
-        cfg = json.loads(s)
-        await initialize(cfg)
+    config.load_config(file_path)

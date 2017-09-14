@@ -4,7 +4,7 @@
 template:
 
 {
-    "cache_redis": {
+    "redis": {
         "host": "10.0.30.26",
         "port": 20100,
         "password": "yj123456789.",
@@ -12,17 +12,7 @@ template:
         "minsize": 1,
         "maxsize": 1
     },
-    "data_mongodb": {
-        "host": "10.0.30.26",
-        "port": 20031,
-        "password": "yj123456789.",
-        "user": "game_yydz_mongodb",
-        "db": "game_yydz",
-        "replicaset": "",
-        "min_pool_size": 2,
-        "max_pool_size": 5
-    },
-    "stat_mongodb": {
+    "mongodb": {
         "host": "10.0.30.26",
         "port": 20031,
         "password": "yj123456789.",
@@ -52,6 +42,15 @@ template:
 _config = {}
 
 
+def load_config(file_path):
+    import json
+    global _config
+    with open(file_path) as f:
+        s = f.read()
+        cfg = json.loads(s)
+        _config = cfg
+    
+
 def set_config(config):
     global _config
     _config = config
@@ -61,18 +60,13 @@ def get_config():
     return _config
 
 
-def get_cache_redis_config():
-    cfg = _config['cache_redis']
+def get_redis_config():
+    cfg = _config['redis']
     return cfg
 
 
-def get_data_mongo_config():
-    cfg = _config['data_mongodb']
-    return cfg
-
-
-def get_stat_mongo_config():
-    cfg = _config['stat_mongodb']
+def get_mongodb_config():
+    cfg = _config['mongodb']
     return cfg
 
 
