@@ -213,10 +213,12 @@ class Lock(object):
             await asyncio.wait_for(sh, self.timeout)
             return self
         except Exception as e:
-            import traceback
-            print_out('lock failed', self.lock_name, self.timeout, e, traceback.format_exc())
+            print_out('lock failed', self.lock_name, self.timeout, e)
             return None
 
     async def __aexit__(self, exc_type, exc, tb):
+        if exc_type:
+            print_out('lock_exc_error', exc_type, exc, tb)
         from . import communicate
-        return await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
+        await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
+        return True
