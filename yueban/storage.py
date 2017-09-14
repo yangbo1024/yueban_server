@@ -21,7 +21,7 @@ async def create_connection(host, port, database, user, password, replicaset='',
     return db
 
 
-async def create_connection():
+async def create_connection_of_config():
     cfg = config.get_mongodb_config()
     host = cfg['host']
     port = cfg['port']
@@ -36,7 +36,7 @@ async def create_connection():
 
 async def initialize():
     global _stat_db_conn
-    _stat_db_conn = await create_connection()
+    _stat_db_conn = await create_connection_of_config()
 
 
 def get_connection():
