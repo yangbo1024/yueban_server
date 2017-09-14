@@ -134,6 +134,7 @@ async def _unlock_handler(request):
 
 
 async def _hotfix_handler(request):
+    peername = request.transport.get_extra_info('peername')
     import importlib
     try:
         importlib.invalidate_caches()
@@ -144,8 +145,8 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    await log_info('hotfix', result)
-    return utility.pack_pickle_response(result)
+    await log_info('hotfix', peername, result)
+    return utility.pack_json_response(result)
 
 
 def get_web_app():

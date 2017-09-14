@@ -49,7 +49,7 @@ def load_config(file_path):
         s = f.read()
         cfg = json.loads(s)
         _config = cfg
-    
+
 
 def set_config(config):
     global _config
