@@ -35,8 +35,8 @@ async def create_connection_of_config():
 
 
 async def initialize():
-    global _stat_db_conn
-    _stat_db_conn = await create_connection_of_config()
+    global _db_conn
+    _db_conn = await create_connection_of_config()
 
 
 def get_connection():
