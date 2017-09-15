@@ -98,7 +98,7 @@ async def _lock_handler(request):
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     cnt = await _send_redis.lpush(lock_key, _channel_id)
     if cnt <= 1:
-        await _send_redis.lpush(_channel_id, lock_key)
+        await _send_redis.lpush(_channel_id, lock_name)
     await lock_obj.recv_queue.get()
     _check_remove_queue(lock_name)
     used_time = time.time() - begin
