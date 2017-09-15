@@ -171,8 +171,7 @@ async def _loop_brpop():
             unlock_list.insert(0, first_bs)
             for lock_name_bs in unlock_list:
                 lock_name = str(lock_name_bs, 'utf-8')
-                lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-                lock_obj = _locks[lock_key]
+                lock_obj = _locks[lock_name]
                 lock_obj.recv_queue.put_nowait(1)
         except Exception as e:
             import traceback
