@@ -27,6 +27,16 @@ S2C_HEART_BEAT = 1003
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
+_pack_post_handler = globals().setdefault('_pack_post_handler', lambda proto_object: 0)
+
+
+def get_pack_post_handler():
+    return _pack_post_handler
+
+
+def set_pack_post_handler(f):
+    global _pack_post_handler
+    _pack_post_handler = f
 
 
 class Client(object):
@@ -69,6 +79,7 @@ def remove_client(client_id):
 
 
 def _pack(proto_id, proto_object):
+    _pack_post_handler(proto_object)
     id_bs = struct.pack('>i', proto_id)
     js = json.dumps(proto_object)
     body_bs = bytes(js, 'utf8')
