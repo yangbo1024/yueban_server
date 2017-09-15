@@ -17,8 +17,23 @@ import time
 from yueban import log as yueban_log
 
 
-LOG_CATEGORY = 'yueban_schdule'
+LOCK_SCRIPT = """
+redis.call("lpush", KEYS[1], KEYS[2])
+if redis.call("llen", KEYS[1]) <= 1 then
+    redis.call("lpush", KEYS[2], KEYS[1])
+end
+"""
 
+UNLOCK_SCRIPT = """
+redis.call("rpop", KEYS[1])
+if redis.call("llen", KEYS[1]) > 0 then
+    local k = redis.call("lindex", KEYS[1], -1)
+    redis.call("lpush", k, KEYS[1])
+end
+"""
+
+
+LOG_CATEGORY = 'yueban_schdule'
 
 _slow_log_time = 0.1
 
@@ -29,11 +44,11 @@ class Lock(object):
         self.recv_queue = asyncio.PriorityQueue()
 
 
-_web_app = globals().setdefault('_web_app')
-_channel_id = globals().setdefault('_channel_id', '')
-_locks = globals().setdefault('_locks', {})
-_send_redis = globals().setdefault('_send_redis')
-_recv_redis = globals().setdefault('_recv_redis')
+_web_app = None
+_channel_id = ''
+_locks = {}
+_send_redis = None
+_recv_redis = None
 
 
 async def log_info(*args):
@@ -74,18 +89,20 @@ async def _schedule_handler(request):
     return utility.pack_pickle_response('')
 
 
-def _ensure_get_lock(lock_name):
-    if lock_name not in _locks:
-        _locks[lock_name] = Lock()
-    return _locks[lock_name]
+def _ensure_get_lock(lock_key):
+    if lock_key not in _locks:
+        _locks[lock_key] = Lock()
+    return _locks[lock_key]
 
 
-def _check_remove_queue(lock_name):
-    lock = _locks.get(lock_name)
+def _check_remove_queue(lock_key):
+    lock = _locks.get(lock_key)
     if not lock:
-        return
+        return False
     if lock.ref <= 0:
-        _locks.pop(lock_name)
+        _locks.pop(lock_key)
+        return True
+    return False
 
 
 async def _lock_handler(request):
@@ -94,17 +111,14 @@ async def _lock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    # 一定要在push之前生成
-    lock_obj = _ensure_get_lock(lock_name)
+    lock_obj = _ensure_get_lock(lock_key)
     lock_obj.ref += 1
-    cnt = await _send_redis.lpush(lock_key, _channel_id)
-    if cnt <= 1:
-        lock_obj.ref -= 1
-        _check_remove_queue(lock_name)
-        return utility.pack_pickle_response(0)
+    await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
     await lock_obj.recv_queue.get()
     lock_obj.ref -= 1
-    _check_remove_queue(lock_name)
+    delete = _check_remove_queue(lock_key)
+    if delete:
+        await log_info('delete lock obj', lock_name)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
         await log_info('slow_lock', used_time, _channel_id, msg)
@@ -117,8 +131,7 @@ async def _unlock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    notify_channel = await _send_redis.rpop(lock_key)
-    await _send_redis.lpush(notify_channel, lock_name)
+    await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
         await log_info('slow_unlock', used_time, _channel_id, msg)
@@ -172,12 +185,12 @@ async def _loop_brpop():
             tr.lrange(_channel_id, 0, -1)
             tr.delete(_channel_id)
             ret = await tr.execute()
-            unlock_list = ret[0] or []
-            first_bs = msg[1]
-            unlock_list.insert(0, first_bs)
-            for lock_name_bs in unlock_list:
-                lock_name = str(lock_name_bs, 'utf-8')
-                lock_obj = _locks[lock_name]
+            lock_keys = ret[0] or []
+            first = msg[1]
+            lock_keys.insert(0, first)
+            for lock_key_bs in lock_keys:
+                lock_key = str(lock_key_bs, 'utf8')
+                lock_obj = _locks[lock_key]
                 lock_obj.recv_queue.put_nowait(1)
         except Exception as e:
             import traceback
