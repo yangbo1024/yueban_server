@@ -25,7 +25,7 @@ _slow_log_time = 0.1
 
 class Lock(object):
     def __init__(self):
-        self.send_queue = asyncio.PriorityQueue()
+        self.ref = 0
         self.recv_queue = asyncio.PriorityQueue()
 
 
@@ -84,7 +84,7 @@ def _check_remove_queue(lock_name):
     lock = _locks.get(lock_name)
     if not lock:
         return
-    if lock.send_queue.qsize() <= 0 and lock.recv_queue.qsize() <= 0:
+    if lock.ref <= 0:
         _locks.pop(lock_name)
 
 
@@ -93,13 +93,14 @@ async def _lock_handler(request):
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
-    lock_obj = _ensure_get_lock(lock_name)
-    lock_obj.send_queue.put_nowait(1)
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     cnt = await _send_redis.lpush(lock_key, _channel_id)
     if cnt <= 1:
-        await _send_redis.lpush(_channel_id, lock_name)
+        return utility.pack_pickle_response(0)
+    lock_obj = _ensure_get_lock(lock_name)
+    lock_obj.ref += 1
     await lock_obj.recv_queue.get()
+    lock_obj.ref -= 1
     _check_remove_queue(lock_name)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
