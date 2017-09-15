@@ -94,11 +94,14 @@ async def _lock_handler(request):
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    cnt = await _send_redis.lpush(lock_key, _channel_id)
-    if cnt <= 1:
-        return utility.pack_pickle_response(0)
+    # 一定要在push之前生成
     lock_obj = _ensure_get_lock(lock_name)
     lock_obj.ref += 1
+    cnt = await _send_redis.lpush(lock_key, _channel_id)
+    if cnt <= 1:
+        lock_obj.ref -= 1
+        _check_remove_queue(lock_name)
+        return utility.pack_pickle_response(0)
     await lock_obj.recv_queue.get()
     lock_obj.ref -= 1
     _check_remove_queue(lock_name)
