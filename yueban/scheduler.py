@@ -189,7 +189,7 @@ async def _loop_brpop():
             first = msg[1]
             lock_keys.insert(0, first)
             for lock_key_bs in lock_keys:
-                lock_key = str(lock_key_bs, 'utf8')
+                lock_key = str(lock_key_bs, 'utf-8')
                 lock_obj = _locks[lock_key]
                 lock_obj.recv_queue.put_nowait(1)
         except Exception as e:

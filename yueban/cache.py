@@ -13,7 +13,7 @@ _redis_pool = None
 
 # 以SYS_KEY_PREFIX开头的key，是系统保留key
 SYS_KEY_PREFIX = '_y'
-LOCK_PREFIX = '{0}:lck'.format(SYS_KEY_PREFIX)
+LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
 
 
 def make_key(*fields):

@@ -2,22 +2,23 @@
 
 """
 template:
+"""
 
-{
+_config = {
     "redis": {
-        "host": "10.0.30.26",
-        "port": 20100,
-        "password": "yj123456789.",
+        "host": "123.123.123.123",
+        "port": 12345,
+        "password": "password",
         "db": 0,
         "minsize": 1,
         "maxsize": 1
     },
     "mongodb": {
-        "host": "10.0.30.26",
-        "port": 20031,
-        "password": "yj123456789.",
-        "user": "game_yydz_mongodb",
-        "db": "game_yydz",
+        "host": "123.123.123.123",
+        "port": 12345,
+        "password": "password",
+        "user": "user",
+        "db": "db",
         "replicaset": "",
         "min_pool_size": 2,
         "max_pool_size": 5
@@ -25,21 +26,18 @@ template:
     "gaters": {
         "huanan_1": {
             "id": "huanan_1",
-            "host": "10.0.30.26",
-            "port": 13100,
-            "url": "http://10.0.30.26:13100",
-            "ws_url": "ws://10.0.30.26:13100/"
+            "host": "123.123.123.123",
+            "port": 12345,
+            "url": "http://123.123.123.123:13100",
+            "ws_url": "ws://123.123.123.123:13100/"
         }
     },
-    "scheduler_url": "http://10.0.30.26:13010",
-    "worker_url": "http://10.0.30.26:13020",
+    "scheduler_url": "123.123.123.123:13010",
+    "worker_url": "http://123.123.123.123:13020",
     "csv_dir": "csv_table",
     "log_dir": "logs",
     "password": "Yueban1234"
 }
-"""
-
-_config = {}
 
 
 def load_config(file_path):
