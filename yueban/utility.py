@@ -218,7 +218,9 @@ class Lock(object):
 
     async def __aexit__(self, exc_type, exc, tb):
         if exc_type:
-            print_out('lock_exc_error', exc_type, exc, tb)
+            import traceback
+            es = traceback.format_exception(exc_type, exc, tb)
+            print_out('lock_exc_error:\n', es)
         from . import communicate
         await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
         return True
