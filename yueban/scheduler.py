@@ -116,9 +116,7 @@ async def _lock_handler(request):
     await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
     await lock_obj.recv_queue.get()
     lock_obj.ref -= 1
-    delete = _check_remove_queue(lock_key)
-    if delete:
-        await log_info('delete lock obj', lock_name)
+    _check_remove_queue(lock_key)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
         await log_info('slow_lock', used_time, _channel_id, msg)

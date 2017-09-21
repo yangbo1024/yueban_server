@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-template:
+configuration
 """
 
 _config = {
