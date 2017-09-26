@@ -14,29 +14,42 @@ _redis_pool = None
 # 以SYS_KEY_PREFIX开头的key，是系统保留key
 SYS_KEY_PREFIX = '_y'
 LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
+LOCK_CHANNEL = '{0}:ch:lock'.format(SYS_KEY_PREFIX)
 
 
 def make_key(*fields):
     return ':'.join(fields)
 
 
-async def create_connection(host, port, password, db):
-    return await aioredis.create_redis_pool((host, port), db=db, password=password)
+async def create_pool(host, port, password, db, minsize, maxsize):
+    return await aioredis.create_redis_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize)
 
 
-async def create_connection_of_config():
+async def create_pool_of_config():
     global _redis_pool
     cfg = config.get_redis_config()
     host = cfg['host']
     port = cfg['port']
     password = cfg['password']
     db = cfg['db']
-    return await create_connection(host, port, password, db)
+    minsize = cfg['minsize']
+    maxsize = cfg['maxsize']
+    return await create_pool(host, port, password, db, minsize, maxsize)
+
+
+async def create_pool_with_custom_size(minsize, maxsize):
+    global _redis_pool
+    cfg = config.get_redis_config()
+    host = cfg['host']
+    port = cfg['port']
+    password = cfg['password']
+    db = cfg['db']
+    return await create_pool(host, port, password, db, minsize, maxsize)
 
 
 async def initialize():
     global _redis_pool
-    _redis_pool = await create_connection_of_config()
+    _redis_pool = await create_pool()
 
 
 def get_connection_pool():

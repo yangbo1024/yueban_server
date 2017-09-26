@@ -213,7 +213,9 @@ class Lock(object):
             await asyncio.wait_for(sh, self.timeout)
             return self
         except Exception as e:
-            print_out('lock failed', self.lock_name, self.timeout, e)
+            import traceback
+            tbs = traceback.format_exc()
+            print_out('lock failed', self.lock_name, self.timeout, e, tbs)
             return None
 
     async def __aexit__(self, exc_type, exc, tb):

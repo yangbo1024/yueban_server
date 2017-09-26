@@ -9,8 +9,6 @@ csv数据表处理
 import json
 from . import config
 import os
-from . import utility
-import traceback
 import csv
 import os.path
 
@@ -72,9 +70,9 @@ def _load_table_data(path):
 
 def _get_newest_table_data(table_name):
     path = _get_table_path(table_name)
+    stat_info = os.stat(path)
+    old_time = _cached_mtimes.get(table_name, 0)
     try:
-        stat_info = os.stat(path)
-        old_time = _cached_mtimes.get(table_name, 0)
         if stat_info.st_mtime > old_time:
             _cached_mtimes[table_name] = stat_info.st_mtime
             # update table data
@@ -89,7 +87,11 @@ def _get_newest_table_data(table_name):
                 _cached_tables[table_name] = table_data
             return table_data
     except Exception as e:
-        utility.print_out(table_name, e, traceback.format_exc())
+        from . import utility
+        import traceback
+        s = traceback.format_exc()
+        utility.print_out("get_newest_table_error", table_name, e, s)
+        raise e
 
 
 def update_table(table_name, table_data_str, encoding='utf-8'):

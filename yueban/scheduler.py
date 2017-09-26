@@ -17,18 +17,12 @@ import time
 from yueban import log as yueban_log
 
 
-LOCK_SCRIPT = """
-redis.call("lpush", KEYS[1], KEYS[2])
-if redis.call("llen", KEYS[1]) <= 1 then
-    redis.call("lpush", KEYS[2], KEYS[1])
-end
-"""
-
+# KEYS = [lock_key]
 UNLOCK_SCRIPT = """
 redis.call("rpop", KEYS[1])
-if redis.call("llen", KEYS[1]) > 0 then
-    local k = redis.call("lindex", KEYS[1], -1)
-    redis.call("lpush", k, KEYS[1])
+local k = redis.call("lindex", KEYS[1], -1)
+if k then
+    redis.call("publish", k, "")
 end
 """
 
@@ -36,19 +30,19 @@ end
 LOG_CATEGORY = 'yueban_schdule'
 
 _slow_log_time = 0.1
-
-
-class Lock(object):
-    def __init__(self):
-        self.ref = 0
-        self.recv_queue = asyncio.PriorityQueue()
-
-
+_pid = None
+_inc = 0
 _web_app = None
-_channel_id = ''
-_locks = {}
 _send_redis = None
 _recv_redis = None
+
+
+def gen_lock_id():
+    global _pid
+    global _inc
+    _inc = (_inc + 1) % 65536
+    t = time.time()
+    return "{0}_{1:06f}_{2}".format(_pid, t, _inc)
 
 
 async def log_info(*args):
@@ -89,50 +83,31 @@ async def _schedule_handler(request):
     return utility.pack_pickle_response('')
 
 
-def _ensure_get_lock(lock_key):
-    if lock_key not in _locks:
-        _locks[lock_key] = Lock()
-    return _locks[lock_key]
-
-
-def _check_remove_queue(lock_key):
-    lock = _locks.get(lock_key)
-    if not lock:
-        return False
-    if lock.ref <= 0:
-        _locks.pop(lock_key)
-        return True
-    return False
-
-
 async def _lock_handler(request):
     begin = time.time()
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
+    lock_id = gen_lock_id()
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
-    lock_obj = _ensure_get_lock(lock_key)
-    lock_obj.ref += 1
-    await _send_redis.eval(LOCK_SCRIPT, keys=[lock_key, _channel_id])
-    await lock_obj.recv_queue.get()
-    lock_obj.ref -= 1
-    _check_remove_queue(lock_key)
+    cnt = await _send_redis.lpush(lock_key, lock_id)
+    print('lock', lock_id, cnt)
+    if cnt <= 1:
+        return utility.pack_pickle_response(0)
+    redis = await _recv_redis.acquire()
+    await redis.brpop(lock_id)
     used_time = time.time() - begin
     if used_time >= _slow_log_time:
-        await log_info('slow_lock', used_time, _channel_id, msg)
+        await log_info('slow_lock', used_time, _pid, msg)
     return utility.pack_pickle_response(0)
 
 
 async def _unlock_handler(request):
-    begin = time.time()
     bs = await request.read()
     msg = utility.loads(bs)
     lock_name = msg[0]
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     await _send_redis.eval(UNLOCK_SCRIPT, keys=[lock_key])
-    used_time = time.time() - begin
-    if used_time >= _slow_log_time:
-        await log_info('slow_unlock', used_time, _channel_id, msg)
     return utility.pack_pickle_response(0)
 
 
@@ -172,40 +147,16 @@ async def _yueban_handler(request):
     return ret
 
 
-async def _loop_brpop():
-    while 1:
-        try:
-            msg = await _recv_redis.brpop(_channel_id)
-            if not msg:
-                await log_error('receive empty msg', _channel_id)
-                continue
-            tr = _recv_redis.multi_exec()
-            tr.lrange(_channel_id, 0, -1)
-            tr.delete(_channel_id)
-            ret = await tr.execute()
-            lock_keys = ret[0] or []
-            first = msg[1]
-            lock_keys.insert(0, first)
-            for lock_key_bs in lock_keys:
-                lock_key = str(lock_key_bs, 'utf-8')
-                lock_obj = _locks[lock_key]
-                lock_obj.recv_queue.put_nowait(1)
-        except Exception as e:
-            import traceback
-            await log_error('loop_brpop error', e, traceback.format_exc())
-
-
-async def initialize():
+async def initialize(min_lock_pool_size=5, max_lock_pool_size=10):
     global _channel_id
     global _send_redis
     global _recv_redis
-    uniq_id = utility.gen_uniq_id()
-    _channel_id = cache.make_key(cache.SYS_KEY_PREFIX, uniq_id)
-    await log_info('loop_rpop_channel', _channel_id)
+    global _pid
+    import os
+    _pid = os.getpid()
     await cache.initialize()
     _send_redis = cache.get_connection_pool()
-    _recv_redis = await cache.create_connection_of_config()
-    asyncio.ensure_future(_loop_brpop())
+    _recv_redis = await cache.create_pool_with_custom_size(min_lock_pool_size, max_lock_pool_size)
 
 
 async def start():
