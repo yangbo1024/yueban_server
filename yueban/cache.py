@@ -5,7 +5,6 @@ redis访问
 """
 
 import aioredis
-from aioredis.pool import ConnectionsPool
 from . import config
 
 
@@ -23,7 +22,7 @@ def make_key(*fields):
 
 
 async def create_pool(host, port, password, db, minsize, maxsize):
-    return await aioredis.create_redis_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize, pool_cls=ConnectionsPool)
+    return await aioredis.create_redis_pool((host, port), db=db, password=password, minsize=minsize, maxsize=maxsize)
 
 
 async def create_pool_of_config():
