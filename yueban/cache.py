@@ -14,7 +14,6 @@ _redis_pool = None
 # 以SYS_KEY_PREFIX开头的key，是系统保留key
 SYS_KEY_PREFIX = '_y'
 LOCK_PREFIX = '{0}:lock'.format(SYS_KEY_PREFIX)
-LOCK_CHANNEL = '{0}:ch:lock'.format(SYS_KEY_PREFIX)
 
 
 def make_key(*fields):
@@ -75,12 +74,12 @@ class Lock(object):
     end
     """
 
-    def __init__(self, lock_name, timeout=3.0, interval=0.05):
+    def __init__(self, lock_name, timeout=5.0, interval=0.01):
         from . import utility
         self.lock_key = make_key(SYS_KEY_PREFIX, lock_name)
         self.lock_id = utility.gen_uniq_id()
         self.timeout = max(0.02, timeout)
-        self.interval = max(0.002, interval)
+        self.interval = max(0.001, interval)
 
     async def __aenter__(self):
         import asyncio
