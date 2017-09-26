@@ -49,7 +49,7 @@ async def create_pool_with_custom_size(minsize, maxsize):
 
 async def initialize():
     global _redis_pool
-    _redis_pool = await create_pool()
+    _redis_pool = await create_pool_of_config()
 
 
 def get_connection_pool():
