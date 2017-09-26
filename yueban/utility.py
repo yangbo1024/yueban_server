@@ -191,39 +191,9 @@ def get_local_ips():
     return ips
 
 
-class Lock(object):
-    """
-    lock for with stmt
-    usage:
-        async with Lock(lock_name) as lock:
-            if lock is None:
-                print('get lock failed')
-            else:
-                print('do some work')
-    """
-    def __init__(self, lock_name, timeout=5.0):
-        self.lock_name = lock_name
-        self.timeout = timeout
+def make_lock(lock_name, timeout=5.0, retry_interval=0.01):
+    from . import cache
+    return cache.Lock(lock_name, timeout, retry_interval)
 
-    async def __aenter__(self):
-        from . import communicate
-        fu = communicate.post_scheduler('/yueban/lock', [self.lock_name])
-        sh = asyncio.shield(fu)
-        try:
-            await asyncio.wait_for(sh, self.timeout)
-            return self
-        except Exception as e:
-            import traceback
-            tbs = traceback.format_exc()
-            print_out('lock failed', self.lock_name, self.timeout, e, tbs)
-            return None
+Lock = make_lock
 
-    async def __aexit__(self, exc_type, exc, tb):
-        if exc_type:
-            import traceback
-            el = traceback.format_exception(exc_type, exc, tb)
-            es = "".join(el)
-            print_out('lock_exc_error:\n', es)
-        from . import communicate
-        await communicate.post_scheduler('/yueban/unlock', [self.lock_name])
-        return True

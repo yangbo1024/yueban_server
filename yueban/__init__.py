@@ -52,7 +52,7 @@ dig:
 from . import config
 
 
-__version__ = '1.9.6'
+__version__ = '1.9.7'
 
 
 async def initialize(cfg):
