@@ -91,7 +91,6 @@ async def _lock_handler(request):
     lock_id = gen_lock_id()
     lock_key = cache.make_key(cache.LOCK_PREFIX, lock_name)
     cnt = await _send_redis.lpush(lock_key, lock_id)
-    print('lock', lock_id, cnt)
     if cnt <= 1:
         return utility.pack_pickle_response(0)
     redis = await _recv_redis.acquire()
@@ -148,7 +147,6 @@ async def _yueban_handler(request):
 
 
 async def initialize(min_lock_pool_size=5, max_lock_pool_size=10):
-    global _channel_id
     global _send_redis
     global _recv_redis
     global _pid
