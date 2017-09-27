@@ -12,7 +12,6 @@ from aiohttp import web
 import datetime
 import os
 import os.path
-import asyncio
 import base64
 
 

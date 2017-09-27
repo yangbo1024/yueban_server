@@ -163,3 +163,9 @@ def get_cell(table_name, index_name, index_value, query_column):
         return None
     return row_map.get(query_column)
 
+
+async def initialize():
+    from . import utility
+    csv_dir = config.get_csv_dir()
+    utility.ensure_directory(csv_dir)
+
