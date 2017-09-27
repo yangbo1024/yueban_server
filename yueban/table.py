@@ -167,5 +167,7 @@ def get_cell(table_name, index_name, index_value, query_column):
 async def initialize():
     from . import utility
     csv_dir = config.get_csv_dir()
+    if not csv_dir:
+        return
     utility.ensure_directory(csv_dir)
 
