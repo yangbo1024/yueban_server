@@ -9,7 +9,7 @@ dig:
                 websocket
                     |
                     |
-          [...gater1,gater2...]]
+          [...gate1,gate2...]]
                     |
                     |
                    http
@@ -33,7 +33,7 @@ dig:
     一个mongodb(副本集）做数据存储
 
 服务一共分为以下几类：
-    1. gater
+    1. gate
         游戏网关，和客户端用websocket直连，和游戏逻辑用http通信，实现桥接客户端和游戏逻辑的通信功能
     2. worker
         逻辑功能
@@ -52,7 +52,7 @@ dig:
 from . import config
 
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 
 async def initialize(cfg):

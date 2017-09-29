@@ -32,7 +32,7 @@ class ProtocolMessage(object):
         """
         if self._client_info is not None:
             return self._client_info
-        ret = await communicate.post_gater(self.gate_id, '/yueban/get_client_info', [self.client_id])
+        ret = await communicate.post_gate(self.gate_id, '/yueban/get_client_info', [self.client_id])
         self._client_info = ret.get(self.client_id, {})
         return self._client_info
 
@@ -86,7 +86,7 @@ async def _call_handler(request):
 
 
 async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
-    await communicate.post_gater(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
+    await communicate.post_gate(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def unicast(gate_id, client_id, proto_id, proto_body):
@@ -104,45 +104,45 @@ async def multicast_ex(client_ids, proto_id, proto_body):
     if not client_ids:
         return
     client_ids = list(client_ids)
-    await communicate.post_all_gaters('/yueban/proto', [client_ids, proto_id, proto_body])
+    await communicate.post_all_gates('/yueban/proto', [client_ids, proto_id, proto_body])
 
 
 async def broadcast(proto_id, proto_body):
-    await communicate.post_all_gaters('/yueban/proto', [[], proto_id, proto_body])
+    await communicate.post_all_gates('/yueban/proto', [[], proto_id, proto_body])
 
 
 async def close_clients(client_ids):
     if not client_ids:
         return
-    return await communicate.post_all_gaters('/yueban/close_client', client_ids)
+    return await communicate.post_all_gates('/yueban/close_client', client_ids)
 
 
 async def close_client(client_id):
     return await close_clients([client_id])
 
 
-async def get_gater_online_cnt(gate_id):
-    return await communicate.post_gater(gate_id, '/yueban/get_online_cnt', '')
+async def get_gate_online_cnt(gate_id):
+    return await communicate.post_gate(gate_id, '/yueban/get_online_cnt', '')
 
 
-async def get_all_gater_online():
-    return await communicate.post_all_gaters('/yueban/get_online_cnt', '')
+async def get_all_gate_online():
+    return await communicate.post_all_gates('/yueban/get_online_cnt', '')
 
 
-async def get_client_infos_of_gater(gate_id, client_ids):
-    return await communicate.post_gater(gate_id, '/yueban/get_client_info', client_ids)
+async def get_client_infos_of_gate(gate_id, client_ids):
+    return await communicate.post_gate(gate_id, '/yueban/get_client_info', client_ids)
 
 
 async def get_all_client_infos(client_ids):
-    return await communicate.post_all_gaters('/yueban/get_client_info', client_ids)
+    return await communicate.post_all_gates('/yueban/get_client_info', client_ids)
 
 
-async def get_all_clients_of_gater(gate_id):
-    return await communicate.post_gater(gate_id, '/yueban/get_all_clients', [])
+async def get_all_clients_of_gate(gate_id):
+    return await communicate.post_gate(gate_id, '/yueban/get_all_clients', [])
 
 
-async def get_clients_of_all_gaters():
-    return await communicate.post_all_gaters('/yueban/get_all_clients', [])
+async def get_clients_of_all_gates():
+    return await communicate.post_all_gates('/yueban/get_all_clients', [])
 
 
 async def call_later(seconds, args):

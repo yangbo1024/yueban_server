@@ -31,7 +31,7 @@ def _create_file_obj(path, mdt):
     return file_obj
 
 
-async def _get_log_file(category):
+async def get_log_file(category):
     log_dir = config.get_log_dir()
     path = os.path.join(log_dir, category)
     path += LOG_FILE_POSTFIX
@@ -64,7 +64,7 @@ async def _get_log_file(category):
 async def _log(category, log_type, *args):
     if not args:
         return
-    f = await _get_log_file(category)
+    f = await get_log_file(category)
     now = datetime.now()
     time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:23]
     sl = [time_str, log_type]

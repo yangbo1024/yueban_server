@@ -23,7 +23,7 @@ _config = {
         "min_pool_size": 2,
         "max_pool_size": 5
     },
-    "gaters": {
+    "gates": {
         "huanan_1": {
             "id": "huanan_1",
             "host": "123.123.123.123",
@@ -68,13 +68,13 @@ def get_mongodb_config():
     return cfg
 
 
-def get_all_gater_ids():
-    cfg = _config['gaters']
+def get_all_gate_ids():
+    cfg = _config['gates']
     return list(cfg.keys())
 
 
 def get_gate_config(gate_id):
-    cfg = _config['gaters']
+    cfg = _config['gates']
     return cfg[gate_id]
 
 
