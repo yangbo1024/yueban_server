@@ -79,7 +79,7 @@ def remove_client(client_id):
 
 
 def _pack(proto_id, proto_object):
-    _pack_post_handler(proto_object)
+    proto_object = _pack_post_handler(proto_object)
     id_bs = struct.pack('>i', proto_id)
     js = json.dumps(proto_object)
     body_bs = bytes(js, 'utf8')
@@ -116,7 +116,9 @@ async def _send_routine(client_obj, ws):
                 break
             await ws.send_bytes(msg)
         except Exception as e:
+            remove_client(client_id)
             log_error('send_routine_error', client_id, e, traceback.format_exc())
+            break
 
 
 async def _recv_routine(client_obj, ws):
@@ -141,7 +143,9 @@ async def _recv_routine(client_obj, ws):
                 await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
                 break
         except Exception as e:
+            remove_client(client_id)
             log_error('recv_routine_error', client_id, e, traceback.format_exc())
+            break
 
 
 async def _websocket_handler(request):
@@ -154,13 +158,14 @@ async def _websocket_handler(request):
     else:
         client_host, client_port = '', 0
     client_obj = _add_client(client_id, client_host, client_port)
-    client_obj.send_queue = asyncio.Queue()
+    client_obj.send_queue = asyncio.Queue(64)
     send_task = asyncio.ensure_future(_send_routine(client_obj, ws))
     recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
     client_obj.send_task = send_task
     client_obj.recv_task = recv_task
     log_info('serve_client', client_id, client_host, client_port)
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
+    log_info("finish_serve", client_id)
     return ws
 
 
@@ -274,7 +279,7 @@ async def _yueban_handler(request):
         return ret
     except Exception as e:
         s = traceback.format_exc()
-        await log_error("error", e, s)
+        log_error("error", e, s)
 
 
 async def _initialize():
