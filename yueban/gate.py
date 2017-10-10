@@ -73,7 +73,12 @@ def remove_client(client_id):
     client_obj = _clients.get(client_id)
     if not client_obj:
         return False
-    client_obj.send_queue.put_nowait(None)
+    try:
+        client_obj.send_queue.put_nowait(None)
+    except Exception as e:
+        s = traceback.format_exc()
+        fu = log.error("remove_client_error", e, s)
+        asyncio.ensure_future(fu)
     _clients.pop(client_id)
     return True
 
@@ -135,7 +140,7 @@ async def _recv_routine(client_obj, ws):
                         'time': time.time(),
                     }
                     hb_rep = _pack(S2C_HEART_BEAT, proto_body)
-                    q.put_nowait(hb_rep)
+                    await q.put(hb_rep)
                 else:
                     await communicate.post_worker('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
             else:
@@ -181,7 +186,7 @@ async def _proto_handler(request):
         if not client_obj:
             continue
         q = client_obj.send_queue
-        q.put_nowait(_pack(proto_id, proto_body))
+        await q.put(_pack(proto_id, proto_body))
     return utility.pack_pickle_response('')
 
 
