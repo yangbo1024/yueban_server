@@ -93,10 +93,10 @@ async def _yueban_handler(request):
 
 
 async def initialize():
-    pass
-
-
-async def start():
     global _web_app
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
+
+
+async def start():
+    pass
