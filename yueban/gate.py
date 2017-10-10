@@ -168,9 +168,9 @@ async def _websocket_handler(request):
     recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
     client_obj.send_task = send_task
     client_obj.recv_task = recv_task
-    log_info('serve_client', client_id, client_host, client_port)
+    log_info('serve_client', client_id, client_host, client_port, len(_clients))
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
-    log_info("finish_serve", client_id)
+    log_info("finish_serve", client_id, len(_clients))
     return ws
 
 
