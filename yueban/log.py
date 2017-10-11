@@ -4,7 +4,7 @@
 日志函数
 需要用到日志的地方，需要先初始化cache
 每个日志文件以category命名，按日切割
-注意category要全局唯一，如果多个master进程部署，每个部署的服务不能共享同样的category
+注意category要全局唯一
 """
 
 from . import utility
@@ -31,7 +31,7 @@ def _create_file_obj(path, mdt):
     return file_obj
 
 
-async def get_log_file(category):
+def get_log_file(category):
     log_dir = config.get_log_dir()
     path = os.path.join(log_dir, category)
     path += LOG_FILE_POSTFIX
@@ -61,10 +61,10 @@ async def get_log_file(category):
     return file_obj.f
 
 
-async def _log(category, log_type, *args):
+def log(category, log_type, *args):
     if not args:
         return
-    f = await get_log_file(category)
+    f = get_log_file(category)
     now = datetime.now()
     time_str = now.strftime('%Y-%m-%d %H:%M:%S,%f')[:23]
     sl = [time_str, log_type]
@@ -75,11 +75,11 @@ async def _log(category, log_type, *args):
 
 
 async def info(category, *args):
-    await _log(category, 'INFO', *args)
+    log(category, 'INFO', *args)
 
 
 async def error(category, *args):
-    await _log(category, 'ERROR', *args)
+    log(category, 'ERROR', *args)
 
 
 async def initialize():

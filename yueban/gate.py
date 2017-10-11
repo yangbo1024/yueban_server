@@ -1,10 +1,7 @@
 # -*- coding:utf-8 -*-
 
 """
-service-gate functions:
-    1. keep connections with clients
-    2. handle client protocols
-    3. push to client
+网关
 """
 
 from aiohttp import web
@@ -37,6 +34,13 @@ def get_pack_post_handler():
 def set_pack_post_handler(f):
     global _pack_post_handler
     _pack_post_handler = f
+
+
+def set_heartbeat_protocol_id(c2s_proto_id, s2c_proto_id):
+    global C2S_HEART_BEAT
+    global S2C_HEART_BEAT
+    C2S_HEART_BEAT = c2s_proto_id
+    S2C_HEART_BEAT = s2c_proto_id
 
 
 class Client(object):
@@ -163,7 +167,7 @@ async def _websocket_handler(request):
     else:
         client_host, client_port = '', 0
     client_obj = _add_client(client_id, client_host, client_port)
-    client_obj.send_queue = asyncio.Queue(64)
+    client_obj.send_queue = asyncio.Queue(1024)
     send_task = asyncio.ensure_future(_send_routine(client_obj, ws))
     recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
     client_obj.send_task = send_task
@@ -186,7 +190,12 @@ async def _proto_handler(request):
         if not client_obj:
             continue
         q = client_obj.send_queue
-        await q.put(_pack(proto_id, proto_body))
+        try:
+            msg = _pack(proto_id, proto_body)
+            q.put_nowait(msg)
+        except Exception as e:
+            s = traceback.format_exc()
+            await log.error("proto_handler_error", client_id, proto_id, proto_body, e, s)
     return utility.pack_pickle_response('')
 
 
