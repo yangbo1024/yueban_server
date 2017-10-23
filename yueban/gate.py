@@ -19,7 +19,7 @@ from . import log
 
 C2S_HEART_BEAT = 1003
 S2C_HEART_BEAT = 1003
-
+MAX_IDLE_TIME = 60
 
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
@@ -134,7 +134,7 @@ async def _recv_routine(client_obj, ws):
     client_id = client_obj.client_id
     while 1:
         try:
-            msg = await ws.receive()
+            msg = await ws.receive(timeout=MAX_IDLE_TIME)
             if msg.type == web.WSMsgType.BINARY:
                 proto_id, proto_object = _unpack(msg.data)
                 # 心跳协议直接在网关处理
