@@ -154,6 +154,7 @@ async def _recv_routine(client_obj, ws):
         except Exception as e:
             remove_client(client_id)
             log_error('recv_routine_error', client_id, e, traceback.format_exc())
+            await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
             break
 
 
