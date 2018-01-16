@@ -74,20 +74,20 @@ def log(category, log_type, *args):
     f.write(s)
 
 
-async def info(category, *args):
+def info(category, *args):
     log(category, 'INFO', *args)
 
 
-async def error(category, *args):
+def error(category, *args):
     log(category, 'ERROR', *args)
 
 
-async def initialize():
+def initialize():
     log_dir = config.get_log_dir()
     utility.ensure_directory(log_dir)
 
 
-async def clear():
+def clear():
     for category, log_file in _log_files.items():
         try:
             log_file.close()

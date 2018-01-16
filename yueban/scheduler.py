@@ -23,11 +23,11 @@ _web_app = None
 
 
 async def log_info(*args):
-    await log.info(LOG_CATEGORY, *args)
+    log.info(LOG_CATEGORY, *args)
 
 
 async def log_error(*args):
-    await log.error(LOG_CATEGORY, *args)
+    log.error(LOG_CATEGORY, *args)
 
 
 def set_slow_log_time(seconds):

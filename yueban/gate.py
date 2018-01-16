@@ -5,7 +5,6 @@
 """
 
 from aiohttp import web
-import lz4.block as lz4block
 import json
 import struct
 import asyncio
@@ -17,35 +16,18 @@ import time
 from . import log
 
 
-C2S_HEART_BEAT = 1003
-S2C_HEART_BEAT = 1003
+C2S_HEARTBEAT_PATH = "/yueban/heartbeat/"
+S2C_HEARTBEAT_PATH = "/yueban/heartbeat/"
 MAX_IDLE_TIME = 60
 
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
 _clients = globals().setdefault('_clients', {})
-_pack_post_handler = globals().setdefault('_pack_post_handler', lambda proto_object: 0)
-
-
-def get_pack_post_handler():
-    return _pack_post_handler
-
-
-def set_pack_post_handler(f):
-    global _pack_post_handler
-    _pack_post_handler = f
-
-
-def set_heartbeat_protocol_id(c2s_proto_id, s2c_proto_id):
-    global C2S_HEART_BEAT
-    global S2C_HEART_BEAT
-    C2S_HEART_BEAT = c2s_proto_id
-    S2C_HEART_BEAT = s2c_proto_id
 
 
 class Client(object):
     """
-    A client object
+    客户端对象，与客户端1：1存在
     """
     def __init__(self, client_id, host, port):
         self.client_id = client_id
@@ -58,13 +40,13 @@ class Client(object):
 
 
 def log_info(*args):
-    fu = log.info(_gate_id, *args)
-    asyncio.ensure_future(fu)
+    global _gate_id
+    log.info(_gate_id, *args)
 
 
 def log_error(*args):
-    fu = log.error(_gate_id, *args)
-    asyncio.ensure_future(fu)
+    global _gate_id
+    log.error(_gate_id, *args)
 
 
 def _add_client(client_id, host, port):
@@ -81,36 +63,9 @@ def remove_client(client_id):
         client_obj.send_queue.put_nowait(None)
     except Exception as e:
         s = traceback.format_exc()
-        fu = log.error("remove_client_error", e, s)
-        asyncio.ensure_future(fu)
+        log_error("remove_client_error", e, s)
     _clients.pop(client_id)
     return True
-
-
-def _pack(proto_id, proto_object):
-    proto_object = _pack_post_handler(proto_object)
-    id_bs = struct.pack('>i', proto_id)
-    js = json.dumps(proto_object)
-    body_bs = bytes(js, 'utf8')
-    bs = id_bs + body_bs
-    bs = lz4block.compress(bs)
-    return bs
-
-
-def _unpack(proto_body):
-    bs = lz4block.decompress(proto_body)
-    size = len(bs)
-    if size < 4:
-        log_error('bad_proto_body', proto_body, bs)
-        return None
-    id_bs = bs[:4]
-    proto_id = struct.unpack('>i', id_bs)[0]
-    if size == 4:
-        return proto_id, None
-    body_bs = bs[4:]
-    js = body_bs.decode('utf8')
-    proto_object = json.loads(js)
-    return proto_id, proto_object
 
 
 async def _send_routine(client_obj, ws):
@@ -123,7 +78,7 @@ async def _send_routine(client_obj, ws):
                 # only in _remove_client can be None
                 log_info('send_queue_none', client_id)
                 break
-            await ws.send_bytes(msg)
+            await ws.send_str(msg)
         except Exception as e:
             remove_client(client_id)
             log_error('send_routine_error', client_id, e, traceback.format_exc())
@@ -131,22 +86,30 @@ async def _send_routine(client_obj, ws):
 
 
 async def _recv_routine(client_obj, ws):
+    """
+    接收处理客户端协议
+    """
     client_id = client_obj.client_id
     while 1:
         try:
             msg = await ws.receive(timeout=MAX_IDLE_TIME)
-            if msg.type == web.WSMsgType.BINARY:
-                proto_id, proto_object = _unpack(msg.data)
-                # 心跳协议直接在网关处理
-                if proto_id == C2S_HEART_BEAT:
+            if msg.type == web.WSMsgType.TEXT:
+                msg_object = json.loads(msg.data)
+                path = msg_object["path"]
+                if path == C2S_HEARTBEAT_PATH:
+                    # 心跳协议直接在网关处理
                     q = client_obj.send_queue
-                    proto_body = {
-                        'time': time.time(),
+                    msg_reply = {
+                        "path": S2C_HEARTBEAT_PATH,
+                        "body": {
+                            "time": time.time(),
+                        }
                     }
-                    hb_rep = _pack(S2C_HEART_BEAT, proto_body)
-                    await q.put(hb_rep)
+                    reply_text = json.dumps(msg_reply)
+                    await q.put(reply_text)
                 else:
-                    await communicate.post_worker('/yueban/proto', [_gate_id, client_id, proto_id, proto_object])
+                    body = msg_object["body"]
+                    await communicate.post_worker('/yueban/proto', [_gate_id, client_id, path, body])
             else:
                 remove_client(client_id)
                 await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
@@ -182,21 +145,29 @@ async def _websocket_handler(request):
 async def _proto_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
-    client_ids, proto_id, proto_body = data
+    client_ids, path, body = data
     if not client_ids:
         # broadcast
         client_ids = _clients.keys()
+    try:
+        msg_object = {
+            "path": path,
+            "body": body,
+        }
+        msg = json.dumps(msg_object)
+    except Exception as e:
+        s = traceback.format_exc()
+        log_error("proto_dump_error", client_ids, path, body, e, s)
     for client_id in client_ids:
         client_obj = _clients.get(client_id)
         if not client_obj:
             continue
-        q = client_obj.send_queue
         try:
-            msg = _pack(proto_id, proto_body)
-            q.put_nowait(msg)
+            q = client_obj.send_queue
+            q.put_nowait(msg)            
         except Exception as e:
             s = traceback.format_exc()
-            await log.error("proto_handler_error", client_id, proto_id, proto_body, e, s)
+            log_error("proto_handler_error", client_id, path, body, e, s)
     return utility.pack_pickle_response('')
 
 
@@ -225,22 +196,12 @@ async def _get_client_info_handler(request):
     data = utility.loads(bs)
     client_ids = data
     infos = {}
+    if not client_ids:
+        client_ids = _clients.keys()
     for client_id in client_ids:
         client_obj = _clients.get(client_id)
         if not client_obj:
             continue
-        infos[client_id] = {
-            'host': client_obj.host,
-        }
-    bs = utility.dumps(infos)
-    return web.Response(body=bs)
-
-
-async def _get_all_clients_handler(request):
-    client_ids = _clients.keys()
-    infos = {}
-    for client_id in client_ids:
-        client_obj = _clients.get(client_id)
         infos[client_id] = {
             'host': client_obj.host,
             'ctime': client_obj.create_time,
@@ -279,7 +240,6 @@ _handlers = {
     '/yueban/close_client': _close_client_handler,
     '/yueban/get_online_cnt': _get_online_cnt_handler,
     '/yueban/get_client_info': _get_client_info_handler,
-    '/yueban/get_all_clients': _get_all_clients_handler,
     '/yueban/hotfix': _hotfix_handler,
 }
 

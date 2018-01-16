@@ -188,11 +188,3 @@ def get_local_ips():
         ip = addr[0]
         ips.append(ip)
     return ips
-
-
-def make_lock(lock_name, timeout=5.0, retry_interval=0.01):
-    from . import cache
-    return cache.Lock(lock_name, timeout, retry_interval)
-
-Lock = make_lock
-

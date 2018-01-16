@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-Service-worker
+worker-逻辑进程，可以热更新
 """
 
 from aiohttp import web
@@ -16,19 +16,20 @@ _web_app = None
 
 
 class ProtocolMessage(object):
-    __slots__ = ['gate_id', 'client_id', 'proto_id', 'proto_body', '_client_info']
-
-    def __init__(self, gate_id, client_id, proto_id, proto_body):
+    def __init__(self, gate_id, client_id, path, body):
         self.gate_id = gate_id
         self.client_id = client_id
-        self.proto_id = proto_id
-        self.proto_body = proto_body
+        self.path = path
+        self.body = body
         self._client_info = None
 
     async def get_client_info(self):
         """
         返回一个字典，里面包含客户端响应的信息
-        :return: {host: ip_or_host}
+        :return: 
+        {
+            "host": ip
+        }
         """
         if self._client_info is not None:
             return self._client_info
@@ -37,8 +38,8 @@ class ProtocolMessage(object):
         return self._client_info
 
     def __str__(self):
-        return 'ProtocolMessage(gate_id={0},client_id={1},proto_id={2},proto_body={3}'.format(
-            self.gate_id, self.client_id, self.proto_id, self.proto_body
+        return 'ProtocolMessage(gate_id={0},client_id={1},path={2},body={3}'.format(
+            self.gate_id, self.client_id, self.path, self.body
         )
 
 
@@ -53,6 +54,9 @@ class Worker(object, metaclass=ABCMeta):
 
     @abstractmethod
     async def on_proto(self, message):
+        """
+        message是ProtocolMessage对象
+        """
         pass
 
     @abstractmethod
@@ -65,8 +69,8 @@ async def _yueban_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
     if path == '/yueban/proto':
-        gate_id, client_id, proto_id, proto_body = data
-        msg_obj = ProtocolMessage(gate_id, client_id, proto_id, proto_body)
+        gate_id, client_id, path, body = data
+        msg_obj = ProtocolMessage(gate_id, client_id, path, body)
         await _worker_app.on_proto(msg_obj)
         return utility.pack_pickle_response('')
     elif path == '/yueban/client_closed':
@@ -85,64 +89,119 @@ async def _call_handler(request):
     return await _worker_app.on_call(request)
 
 
-async def _send_to_gate(gate_id, client_ids, proto_id, proto_body):
-    await communicate.post_gate(gate_id, '/yueban/proto', [client_ids, proto_id, proto_body])
+async def _send_to_gate(gate_id, client_ids, path, body):
+    await communicate.post_gate(gate_id, '/yueban/proto', [client_ids, path, body])
 
 
-async def unicast(gate_id, client_id, proto_id, proto_body):
-    await _send_to_gate(gate_id, [client_id], proto_id, proto_body)
+async def unicast(gate_id, client_id, path, body):
+    """
+    发送消息给一个gate的一个客户端连接
+    """
+    await _send_to_gate(gate_id, [client_id], path, body)
 
 
-async def multicast(gate_id, client_ids, proto_id, proto_body):
+async def multicast(gate_id, client_ids, path, body):
+    """
+    发送消息给一个gate的多个客户端连接
+    """
     if not client_ids:
         return
     client_ids = list(client_ids)
-    await _send_to_gate(gate_id, client_ids, proto_id, proto_body)
+    await _send_to_gate(gate_id, client_ids, path, body)
 
 
-async def multicast_ex(client_ids, proto_id, proto_body):
+async def multicast_ex(client_ids, path, body):
+    """
+    发送消息给多个客户端，不管客户端再哪个gate
+    """
     if not client_ids:
         return
     client_ids = list(client_ids)
-    await communicate.post_all_gates('/yueban/proto', [client_ids, proto_id, proto_body])
+    await communicate.post_all_gates('/yueban/proto', [client_ids, path, body])
 
 
-async def broadcast(proto_id, proto_body):
-    await communicate.post_all_gates('/yueban/proto', [[], proto_id, proto_body])
+async def broadcast(path, body):
+    """
+    广播消息
+    """
+    await communicate.post_all_gates('/yueban/proto', [[], path, body])
 
 
 async def close_clients(client_ids):
+    """
+    主动断开某些客户端连接
+    """
     if not client_ids:
         return
     return await communicate.post_all_gates('/yueban/close_client', client_ids)
 
 
 async def close_client(client_id):
+    """
+    断开一个客户端
+    """
     return await close_clients([client_id])
 
 
 async def get_gate_online_cnt(gate_id):
+    """
+    获取一个gate的在线人数
+    返回格式:
+    {
+        'gate_id': _gate_id,
+        'online': cnt,
+        'config': config.get_gate_config(_gate_id),
+    }
+    """
     return await communicate.post_gate(gate_id, '/yueban/get_online_cnt', '')
 
 
-async def get_all_gate_online():
+async def get_all_gates_online():
+    """
+    获取所有gate的在线人数
+    {
+        gate_id:
+        {
+            'gate_id': _gate_id,
+            'online': cnt,
+            'config': config.get_gate_config(_gate_id),
+        }
+    }
+    """
     return await communicate.post_all_gates('/yueban/get_online_cnt', '')
 
 
 async def get_client_infos_of_gate(gate_id, client_ids):
+    """
+    获取单个gate的所有客户端的信息
+    返回格式:
+    {
+        client_id:
+        {
+            "host": ip,
+            "ctime": create_time,
+        }
+    }
+    """
     return await communicate.post_gate(gate_id, '/yueban/get_client_info', client_ids)
 
 
 async def get_all_client_infos(client_ids):
+    """
+    获取所有客户端的信息
+    返回格式:
+    {
+        gate_id:
+        {
+            client_id:
+            {
+                "host": ip,
+                "ctime": create_time,
+            }
+        }
+    }
+    """
     return await communicate.post_all_gates('/yueban/get_client_info', client_ids)
-
-
-async def get_all_clients_of_gate(gate_id):
-    return await communicate.post_gate(gate_id, '/yueban/get_all_clients', [])
-
-
-async def get_clients_of_all_gates():
-    return await communicate.post_all_gates('/yueban/get_all_clients', [])
 
 
 async def call_later(seconds, args):

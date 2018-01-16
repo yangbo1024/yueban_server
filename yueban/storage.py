@@ -2,9 +2,6 @@
 
 """
 mongodb访问
-有两个mongodb的连接：
-    1. 数据
-    2. 统计
 """
 
 from motor import motor_asyncio
