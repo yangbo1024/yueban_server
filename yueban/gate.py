@@ -101,9 +101,8 @@ async def _recv_routine(client_obj, ws):
                     q = client_obj.send_queue
                     msg_reply = {
                         "path": S2C_HEARTBEAT_PATH,
-                        "body": {
-                            "time": time.time(),
-                        }
+                        "body": {},
+                        "time": time.time(),
                     }
                     reply_text = json.dumps(msg_reply)
                     await q.put(reply_text)
@@ -153,11 +152,13 @@ async def _proto_handler(request):
         msg_object = {
             "path": path,
             "body": body,
+            "time": time.time(),
         }
         msg = json.dumps(msg_object)
     except Exception as e:
         s = traceback.format_exc()
         log_error("proto_dump_error", client_ids, path, body, e, s)
+        return
     for client_id in client_ids:
         client_obj = _clients.get(client_id)
         if not client_obj:

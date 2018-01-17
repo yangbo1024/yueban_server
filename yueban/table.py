@@ -11,6 +11,7 @@ from . import config
 import os
 import csv
 import os.path
+import copy
 
 
 TYPE_FUNC_MAP = {
@@ -114,7 +115,8 @@ def get_table(table_name):
     :param table_name:
     :return:
     """
-    return _get_newest_table_data(table_name)
+    data = _get_newest_table_data(table_name)
+    return copy.deepcopy(data)
 
 
 def get_rows(table_name, index_name, index_value):
@@ -128,7 +130,7 @@ def get_rows(table_name, index_name, index_value):
     table_data = _get_newest_table_data(table_name)
     if not table_data:
         return None
-    ret = [row_data for row_data in table_data if row_data[index_name] == index_value]
+    ret = [copy.deepcopy(row_data) for row_data in table_data if row_data[index_name] == index_value]
     return ret
 
 
@@ -145,7 +147,7 @@ def get_row(table_name, index_name, index_value):
         return None
     for row_data in table_data:
         if row_data[index_name] == index_value:
-            return row_data
+            return copy.deepcopy(row_data)
     return None
 
 
@@ -161,7 +163,7 @@ def get_cell(table_name, index_name, index_value, query_column):
     row_map = get_row(table_name, index_name, index_value)
     if not row_map:
         return None
-    return row_map.get(query_column)
+    return copy.deepcopy(row_map.get(query_column))
 
 
 async def initialize():

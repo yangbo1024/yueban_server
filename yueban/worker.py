@@ -45,7 +45,7 @@ class ProtocolMessage(object):
 
 class Worker(object, metaclass=ABCMeta):
     @abstractmethod
-    async def on_call(self, request):
+    async def on_request(self, request):
         pass
 
     @abstractmethod
@@ -85,8 +85,8 @@ async def _yueban_handler(request):
         return utility.pack_pickle_response('')
 
 
-async def _call_handler(request):
-    return await _worker_app.on_call(request)
+async def _request_handler(request):
+    return await _worker_app.on_request(request)
 
 
 async def _send_to_gate(gate_id, client_ids, path, body):
@@ -226,4 +226,5 @@ async def start(app):
     _worker_app = app
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
-    _web_app.router.add_post('/call/{path:.*}', _call_handler)
+    _web_app.router.add_get("/yueban/request", _request_handler)
+    _web_app.router.add_post("/yueban/request", _request_handler)
