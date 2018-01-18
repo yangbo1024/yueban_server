@@ -226,5 +226,5 @@ async def start(app):
     _worker_app = app
     _web_app = web.Application()
     _web_app.router.add_post('/yueban/{path}', _yueban_handler)
-    _web_app.router.add_get("/yueban/request", _request_handler)
-    _web_app.router.add_post("/yueban/request", _request_handler)
+    _web_app.router.add_get("/yueban/request/{path:.*}", _request_handler)
+    _web_app.router.add_post("/yueban/request/{path:.*}", _request_handler)
