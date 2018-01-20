@@ -274,7 +274,7 @@ async def _yueban_handler(request):
 
 
 async def _initialize():
-    await log.initialize()
+    log.initialize()
 
 
 def run(gate_id):
