@@ -16,9 +16,10 @@ import time
 from . import log
 
 
-C2S_HEARTBEAT_PATH = "/yueban/heartbeat/"
-S2C_HEARTBEAT_PATH = "/yueban/heartbeat/"
+C2S_HEARTBEAT_PATH = "/yueban/heartbeat"
+S2C_HEARTBEAT_PATH = "/yueban/heartbeat"
 MAX_IDLE_TIME = 60
+
 
 _web_app = globals().setdefault('_web_app')
 _gate_id = globals().setdefault('_gate_id', '')
@@ -47,6 +48,14 @@ def log_info(*args):
 def log_error(*args):
     global _gate_id
     log.error(_gate_id, *args)
+
+
+def set_heartbeat_path(c2s_path, s2c_path):
+    global C2S_HEARTBEAT_PATH
+    global S2C_HEARTBEAT_PATH
+    C2S_HEARTBEAT_PATH = c2s_path
+    S2C_HEARTBEAT_PATH = s2c_path
+    log_info("set_heartbeat_path", c2s_path, s2c_path)
 
 
 def _add_client(client_id, host, port):
@@ -246,6 +255,12 @@ _handlers = {
 
 
 async def _yueban_handler(request):
+    peer_name = request.transport.get_extra_info('peername')
+    client_host = peer_name[0]
+    valid_hosts = config.get_valid_hosts()
+    if client_host not in valid_hosts:
+        err_msg = "request peer not in valid_hosts:".format(request.path, client_host)
+        raise RuntimeError(err_msg)
     handler = _handlers.get(request.path)
     if not handler:
         log_error('bad handler', request.path)

@@ -12,6 +12,7 @@ from . import utility
 from . import communicate
 import time
 from . import log
+from yueban import config
 
 
 LOG_CATEGORY = 'yueban_schdule'
@@ -61,7 +62,13 @@ async def _schedule_handler(request):
 
 
 async def _hotfix_handler(request):
-    peername = request.transport.get_extra_info('peername')
+    path = request.path
+    peer_name = request.transport.get_extra_info('peername')
+    client_host = peer_name[0]
+    valid_hosts = config.get_valid_hosts()
+    if client_host not in valid_hosts:
+        err_msg = "request peer not in valid_hosts:{} {}".format(path, client_host)
+        raise RuntimeError(err_msg)
     import importlib
     try:
         importlib.invalidate_caches()
@@ -72,7 +79,7 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    await log_info('hotfix', peername, result)
+    await log_info('hotfix', peer_name, result)
     return utility.pack_json_response(result)
 
 
