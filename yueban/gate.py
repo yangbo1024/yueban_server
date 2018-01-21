@@ -6,7 +6,6 @@
 
 from aiohttp import web
 import json
-import struct
 import asyncio
 from . import utility
 from . import communicate
