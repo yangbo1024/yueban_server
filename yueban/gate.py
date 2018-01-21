@@ -16,8 +16,8 @@ import time
 from . import log
 
 
-C2S_HEARTBEAT_PATH = "/yueban/heartbeat"
-S2C_HEARTBEAT_PATH = "/yueban/heartbeat"
+C2S_HEARTBEAT_PATH = "yueban.heartbeat"
+S2C_HEARTBEAT_PATH = "yueban.heartbeat"
 MAX_IDLE_TIME = 60
 
 
