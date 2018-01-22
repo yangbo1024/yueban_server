@@ -220,7 +220,7 @@ async def _get_client_info_handler(request):
 
 
 async def _hotfix_handler(request):
-    peername = request.transport.get_extra_info('peername')
+    peer_name = request.transport.get_extra_info('peername')
     import importlib
     try:
         importlib.invalidate_caches()
@@ -231,7 +231,7 @@ async def _hotfix_handler(request):
         import traceback
         result = [e, traceback.format_exc()]
     result = str(result)
-    log_info('hotfix', peername, result)
+    log_info('hotfix', peer_name, result)
     return utility.pack_json_response(result)
 
 

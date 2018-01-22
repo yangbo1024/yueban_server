@@ -9,21 +9,8 @@ csv数据表处理
 import json
 from . import config
 import os
-import csv
 import os.path
 import copy
-
-
-TYPE_FUNC_MAP = {
-    'int': lambda x: int(x) if x else 0,
-    'long': lambda x: int(x) if x else 0,
-    'float': lambda x: float(x) if x else 0,
-    'str': lambda x: x,
-    'string': lambda x: x,
-    'json': json.loads,
-    'list': json.loads,
-    'dict': json.loads,
-}
 
 
 _cached_mtimes = {}
@@ -32,39 +19,28 @@ _inited = False
 
 
 def _get_table_path(table_name):
-    table_file_name = table_name + '.csv'
-    csv_dir = config.get_csv_dir()
-    path = os.path.join(csv_dir, table_file_name)
+    table_file_name = table_name + '.json'
+    table_data_dir = config.get_table_data_dir()
+    path = os.path.join(table_data_dir, table_file_name)
     return path
 
 
 def _load_table_data(path):
     table_data = []
     with open(path) as f:
-        reader = csv.reader(f)
+        data_str = f.read()
+        data = json.loads(data_str)
         headers = []
-        type_funcs = []
-        for i, row in enumerate(reader):
+        for i, row in enumerate(data):
             if i == 0:
-                for col in row:
-                    tp_begin = col.find('(')
-                    tp_end = col.find(')')
-                    if tp_begin < 0:
-                        header = col
-                        tp_func = 'str'
-                    else:
-                        header = col[:tp_begin]
-                        tp_func = col[tp_begin+1:tp_end]
+                for header in row:
                     headers.append(header)
-                    type_funcs.append(tp_func)
             else:
                 if not row[0]:
                     break
                 row_data = {}
                 for j, col in enumerate(row):
-                    tpf = type_funcs[j]
-                    f = TYPE_FUNC_MAP[tpf]
-                    row_data[headers[j]] = f(col)
+                    row_data[headers[j]] = col
                 table_data.append(row_data)
     return table_data
 
@@ -168,8 +144,8 @@ def get_cell(table_name, index_name, index_value, query_column):
 
 async def initialize():
     from . import utility
-    csv_dir = config.get_csv_dir()
-    if not csv_dir:
+    table_data_dir = config.get_table_data_dir()
+    if not table_data_dir:
         return
-    utility.ensure_directory(csv_dir)
+    utility.ensure_directory(table_data_dir)
 

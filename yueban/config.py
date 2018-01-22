@@ -34,7 +34,7 @@ _config = {
     },
     "scheduler_url": "123.123.123.123:13010",
     "worker_url": "http://123.123.123.123:13020",
-    "csv_dir": "csv_table",
+    "table_data_dir": "json_table",
     "log_dir": "logs",
     "valid_hosts": ["127.0.0.1", "69.165.74.45"],
 }
@@ -91,8 +91,8 @@ def get_worker_url():
     return _config['worker_url']
 
 
-def get_csv_dir():
-    return _config['csv_dir']
+def get_table_data_dir():
+    return _config['table_data_dir']
 
 
 def get_log_dir():
