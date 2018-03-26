@@ -23,6 +23,8 @@ _config = {
         "min_pool_size": 2,
         "max_pool_size": 5
     },
+    "scheduler_url": "http://123.123.123.123:13010",
+    "worker_url": "http://123.123.123.123:13020",
     "gates": {
         "huanan_1": {
             "id": "huanan_1",
@@ -32,8 +34,6 @@ _config = {
             "ws_url": "ws://123.123.123.123:13100/"
         }
     },
-    "scheduler_url": "123.123.123.123:13010",
-    "worker_url": "http://123.123.123.123:13020",
     "table_data_dir": "json_table",
     "log_dir": "logs"
 }
