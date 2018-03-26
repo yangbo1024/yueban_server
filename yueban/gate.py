@@ -254,12 +254,6 @@ _handlers = {
 
 
 async def _yueban_handler(request):
-    peer_name = request.transport.get_extra_info('peername')
-    client_host = peer_name[0]
-    valid_hosts = config.get_valid_hosts()
-    if client_host not in valid_hosts:
-        err_msg = "request peer not in valid_hosts:".format(request.path, client_host)
-        raise RuntimeError(err_msg)
     handler = _handlers.get(request.path)
     if not handler:
         log_error('bad handler', request.path)

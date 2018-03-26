@@ -66,12 +66,6 @@ class Worker(object, metaclass=ABCMeta):
 
 async def _yueban_handler(request):
     path = request.path
-    peer_name = request.transport.get_extra_info('peername')
-    client_host = peer_name[0]
-    valid_hosts = config.get_valid_hosts()
-    if client_host not in valid_hosts:
-        err_msg = "request peer not in valid_hosts:{} {}".format(path, client_host)
-        raise RuntimeError(err_msg)
     bs = await request.read()
     data = utility.loads(bs)
     if path == '/yueban/proto':
