@@ -74,12 +74,14 @@ class Lock(object):
     end
     """
 
-    def __init__(self, lock_name, timeout=5.0, interval=0.01):
+    def __init__(self, lock_name, timeout=5.0, interval=0.01, lua_valid=False):
+        # 很大一部分云服务提供商的redis不支持lua，所以默认不采用lua辅助实现
         from . import utility
         self.lock_key = make_key(SYS_KEY_PREFIX, lock_name)
         self.lock_id = utility.gen_uniq_id()
         self.timeout = max(0.02, timeout)
         self.interval = max(0.001, interval)
+        self.lua_valid = lua_valid
 
     async def __aenter__(self):
         import asyncio
@@ -105,4 +107,9 @@ class Lock(object):
             el = traceback.format_exception(exc_type, exc, tb)
             es = "".join(el)
             utility.print_out('lock_exc_error:\n', es)
-        await _redis_pool.eval(self.UNLOCK_SCRIPT, keys=[self.lock_key], args=[self.lock_id])
+        if self.lua_valid:
+            await _redis_pool.eval(self.UNLOCK_SCRIPT, keys=[self.lock_key], args=[self.lock_id])
+        else:
+            locked_id = await _redis_pool.get(self.lock_key)
+            if locked_id == self.lock_id:
+                await _redis_pool.delete(self.lock_key)

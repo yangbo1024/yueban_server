@@ -15,8 +15,8 @@ import time
 from . import log
 
 
-C2S_HEARTBEAT_PATH = "yueban.heartbeat"
-S2C_HEARTBEAT_PATH = "yueban.heartbeat"
+C2S_HEARTBEAT_PATH = "_hb"
+S2C_HEARTBEAT_PATH = "_hb"
 MAX_IDLE_TIME = 60
 
 
@@ -55,6 +55,11 @@ def set_heartbeat_path(c2s_path, s2c_path):
     C2S_HEARTBEAT_PATH = c2s_path
     S2C_HEARTBEAT_PATH = s2c_path
     log_info("set_heartbeat_path", c2s_path, s2c_path)
+
+
+def set_max_idle_time(sec):
+    global MAX_IDLE_TIME
+    MAX_IDLE_TIME = sec
 
 
 def _add_client(client_id, host, port):
