@@ -11,6 +11,25 @@ from . import utility
 import traceback
 
 
+class GatePath(object):
+    Proto = "/__proto"
+    CloseClient = "/__close_client"
+    GetOnlineCnt = "/__get_online_cnt"
+    GetClientInfo = "/__get_client_info"
+    Hotfix = "/__hotfix"
+    
+    
+class WorkerPath(object):
+    Proto = "/__proto"
+    ClientClosed = "/__client_closed"
+    OnSchedule = "/__on_schedule"
+
+
+class SchedulePath(object):
+    Schedule = "/__schedule"
+    Hotfix = "/__hotfix"
+
+
 async def post(url, args):
     try:
         data = utility.dumps(args)

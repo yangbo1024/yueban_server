@@ -15,8 +15,7 @@ from . import log
 from yueban import config
 
 
-LOG_CATEGORY = 'yueban_schdule'
-
+_log_category = 'yueban_schdule'
 _slow_log_time = 0.1
 
 
@@ -24,11 +23,22 @@ _web_app = None
 
 
 async def log_info(*args):
-    log.info(LOG_CATEGORY, *args)
+    global _log_category
+    log.info(_log_category, *args)
 
 
 async def log_error(*args):
-    log.error(LOG_CATEGORY, *args)
+    global _log_category
+    log.error(_log_category, *args)
+
+
+def set_log_category(category):
+    global _log_category
+    _log_category = category
+
+
+def get_log_category():
+    return _log_category
 
 
 def set_slow_log_time(seconds):
@@ -83,9 +93,9 @@ def get_web_app():
 
 async def _yueban_handler(request):
     path = request.path
-    if path == '/yueban/schedule':
+    if path == communicate.SchedulePath.Schedule:
         ret = await _schedule_handler(request)
-    elif path == '/yueban/hotfix':
+    elif path == communicate.SchedulePath.Hotfix:
         ret = await _hotfix_handler(request)
     else:
         ret = {}
@@ -96,7 +106,7 @@ async def _yueban_handler(request):
 async def initialize():
     global _web_app
     _web_app = web.Application()
-    _web_app.router.add_post('/yueban/{path}', _yueban_handler)
+    _web_app.router.add_post('/{path}', _yueban_handler)
 
 
 async def start():

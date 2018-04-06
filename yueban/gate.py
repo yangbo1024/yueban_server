@@ -121,15 +121,15 @@ async def _recv_routine(client_obj, ws):
                     await q.put(reply_text)
                 else:
                     body = msg_object["body"]
-                    await communicate.post_worker('/yueban/proto', [_gate_id, client_id, path, body])
+                    await communicate.post_worker(communicate.WorkerPath.Proto, [_gate_id, client_id, path, body])
             else:
                 remove_client(client_id)
-                await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
+                await communicate.post_worker(communicate.WorkerPath.ClientClosed, [_gate_id, client_id])
                 break
         except Exception as e:
             remove_client(client_id)
             log_error('recv_routine_error', client_id, e, traceback.format_exc())
-            await communicate.post_worker('/yueban/client_closed', [_gate_id, client_id])
+            await communicate.post_worker(communicate.WorkerPath.ClientClosed, [_gate_id, client_id])
             break
 
 
@@ -250,11 +250,11 @@ def set_gate_id(gate_id):
 
 
 _handlers = {
-    '/yueban/proto': _proto_handler,
-    '/yueban/close_client': _close_client_handler,
-    '/yueban/get_online_cnt': _get_online_cnt_handler,
-    '/yueban/get_client_info': _get_client_info_handler,
-    '/yueban/hotfix': _hotfix_handler,
+    communicate.GatePath.Proto: _proto_handler,
+    communicate.GatePath.CloseClient: _close_client_handler,
+    communicate.GatePath.GetOnlineCnt: _get_online_cnt_handler,
+    communicate.GatePath.GetClientInfo: _get_client_info_handler,
+    communicate.GatePath.Hotfix: _hotfix_handler,
 }
 
 
@@ -287,5 +287,5 @@ def run(gate_id):
     port = cfg['port']
     _web_app = web.Application()
     _web_app.router.add_get('/', _websocket_handler)
-    _web_app.router.add_post('/yueban/{path}', _yueban_handler)
+    _web_app.router.add_post('/{path}', _yueban_handler)
     web.run_app(_web_app, host=host, port=port, access_log=None)
