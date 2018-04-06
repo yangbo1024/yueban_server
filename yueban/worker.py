@@ -236,5 +236,5 @@ async def start(app):
         raise TypeError("bad worker instance type")
     _worker_app = app
     _web_app = web.Application()
-    _web_app.router.add_get("/{path}", _yueban_handler)
-    _web_app.router.add_post("/{path}", _yueban_handler)
+    _web_app.router.add_get("/{path:.*}", _yueban_handler)
+    _web_app.router.add_post("/{path:.*}", _yueban_handler)
