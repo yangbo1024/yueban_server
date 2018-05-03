@@ -6,13 +6,24 @@ mongodb访问
 
 from motor import motor_asyncio
 from . import config
+import pymongo
 
 
 _db_conn = None
+_readonly_conn = None
 
 
 async def create_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):
     client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset, minPoolSize=min_pool_size, maxPoolSize=max_pool_size)
+    db = client[database]
+    await db.authenticate(user, password)
+    return db
+
+
+async def create_readonly_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):
+    rpf = pymongo.ReadPreference.SECONDARY
+    client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset,
+        minPoolSize=min_pool_size, maxPoolSize=max_pool_size, read_preference=rpf)
     db = client[database]
     await db.authenticate(user, password)
     return db
@@ -31,13 +42,26 @@ async def create_connection_of_config():
     return await create_connection(host, port, db, user, password, replicaset, min_pool_size, max_pool_size)
 
 
-async def initialize():
+async def initialize(with_readonly=False):
     global _db_conn
     _db_conn = await create_connection_of_config()
+    if with_readonly:
+        global _readonly_conn
+        _readonly_conn = await create_readonly_connection()
 
 
 def get_connection():
     return _db_conn
 
+
+def get_database():
+    return _db_conn
+    
+
+def get_readonly_connection():
+    global _readonly_conn
+    if _readonly_conn:
+        return _readonly_conn
+    _readonly_conn = 
 
 
