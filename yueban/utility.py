@@ -133,8 +133,7 @@ def gen_uniq_id(encoding='utf-8'):
     bs = uuid.uuid1().bytes
     uniq_id = base64.standard_b64encode(bs)
     s = str(uniq_id, encoding)
-    s = s.replace("/", "_")
-    s = s.replace("+", "-")
+    s = s.replace("/", "-")
     return s
 
 
