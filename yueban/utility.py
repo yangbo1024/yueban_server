@@ -131,9 +131,9 @@ def gen_uniq_id(encoding='utf-8'):
     :return: 字符串
     """
     bs = uuid.uuid1().bytes
-    uniq_id = base64.standard_b64encode(bs)
+    uniq_id = base64.urlsafe_b64encode(bs)
     s = str(uniq_id, encoding)
-    s = s.replace("/", "-")
+    s = s.replace("=", "")
     return s
 
 
