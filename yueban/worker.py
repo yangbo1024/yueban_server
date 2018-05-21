@@ -92,29 +92,29 @@ async def _request_handler(request):
     return await _worker_app.on_request(request)
 
 
-async def _send_to_gate(gate_id, client_ids, path, body):
+async def _send_to_gate(gate_id, client_ids, proto_id, body):
     path = communicate.GatePath.Proto
-    await communicate.post_gate(gate_id, path, [client_ids, path, body])
+    await communicate.post_gate(gate_id, path, [client_ids, proto_id, body])
 
 
-async def unicast(gate_id, client_id, path, body):
+async def unicast(gate_id, client_id, proto_id, body):
     """
     发送消息给一个gate的一个客户端连接
     """
-    await _send_to_gate(gate_id, [client_id], path, body)
+    await _send_to_gate(gate_id, [client_id], proto_id, body)
 
 
-async def multicast(gate_id, client_ids, path, body):
+async def multicast(gate_id, client_ids, proto_id, body):
     """
     发送消息给一个gate的多个客户端连接
     """
     if not client_ids:
         return
     client_ids = list(client_ids)
-    await _send_to_gate(gate_id, client_ids, path, body)
+    await _send_to_gate(gate_id, client_ids, proto_id, body)
 
 
-async def multicast_ex(client_ids, path, body):
+async def multicast_ex(client_ids, proto_id, body):
     """
     发送消息给多个客户端，不管客户端再哪个gate
     """
@@ -122,15 +122,15 @@ async def multicast_ex(client_ids, path, body):
         return
     client_ids = list(client_ids)
     path = communicate.GatePath.Proto
-    await communicate.post_all_gates(path, [client_ids, path, body])
+    await communicate.post_all_gates(path, [client_ids, proto_id, body])
 
 
-async def broadcast(path, body):
+async def broadcast(proto_id, body):
     """
     广播消息
     """
     path = communicate.GatePath.Proto
-    await communicate.post_all_gates(path, [[], path, body])
+    await communicate.post_all_gates(path, [[], proto_id, body])
 
 
 async def close_clients(client_ids):
