@@ -67,7 +67,7 @@ class Worker(object, metaclass=ABCMeta):
 
 async def _yueban_handler(request):
     path = request.path
-    if not path.startswith("__"):
+    if not path.startswith("/__"):
         return await _request_handler(request)
     bs = await request.read()
     data = utility.loads(bs)
