@@ -15,8 +15,8 @@ import time
 from . import log
 
 
-C2S_HEARTBEAT_PATH = "_hb"
-S2C_HEARTBEAT_PATH = "_hb"
+C2S_HEARTBEAT = "_hb"
+S2C_HEARTBEAT = "_hb"
 MAX_IDLE_TIME = 60
 
 
@@ -49,12 +49,12 @@ def log_error(*args):
     log.error(_gate_id, *args)
 
 
-def set_heartbeat_path(c2s_path, s2c_path):
-    global C2S_HEARTBEAT_PATH
-    global S2C_HEARTBEAT_PATH
-    C2S_HEARTBEAT_PATH = c2s_path
-    S2C_HEARTBEAT_PATH = s2c_path
-    log_info("set_heartbeat_path", c2s_path, s2c_path)
+def set_heartbeat_proto_id(c2s_id, s2c_id):
+    global C2S_HEARTBEAT
+    global S2C_HEARTBEAT
+    C2S_HEARTBEAT = c2s_id
+    S2C_HEARTBEAT = s2c_id
+    log_info("set_heartbeat_proto", c2s_id, s2c_id)
 
 
 def set_max_idle_time(sec):
@@ -102,18 +102,20 @@ async def _recv_routine(client_obj, ws):
     """
     接收处理客户端协议
     """
+    global C2S_HEARTBEAT
+    global S2C_HEARTBEAT
     client_id = client_obj.client_id
     while 1:
         try:
             msg = await ws.receive(timeout=MAX_IDLE_TIME)
             if msg.type == web.WSMsgType.TEXT:
                 msg_object = json.loads(msg.data)
-                path = msg_object["path"]
-                if path == C2S_HEARTBEAT_PATH:
+                proto_id = msg_object["id"]
+                if proto_id == C2S_HEARTBEAT:
                     # 心跳协议直接在网关处理
                     q = client_obj.send_queue
                     msg_reply = {
-                        "path": S2C_HEARTBEAT_PATH,
+                        "id": S2C_HEARTBEAT,
                         "body": {},
                         "time": time.time(),
                     }
@@ -121,7 +123,7 @@ async def _recv_routine(client_obj, ws):
                     await q.put(reply_text)
                 else:
                     body = msg_object["body"]
-                    await communicate.post_worker(communicate.WorkerPath.Proto, [_gate_id, client_id, path, body])
+                    await communicate.post_worker(communicate.WorkerPath.Proto, [_gate_id, client_id, proto_id, body])
             else:
                 remove_client(client_id)
                 await communicate.post_worker(communicate.WorkerPath.ClientClosed, [_gate_id, client_id])
@@ -148,29 +150,30 @@ async def _websocket_handler(request):
     recv_task = asyncio.ensure_future(_recv_routine(client_obj, ws))
     client_obj.send_task = send_task
     client_obj.recv_task = recv_task
-    log_info('serve_client', client_id, client_host, client_port, len(_clients))
+    log_info('start_client', client_id, client_host, client_port, len(_clients))
     await asyncio.wait([send_task, recv_task], return_when=asyncio.FIRST_COMPLETED)
-    log_info("finish_serve", client_id, len(_clients))
+    log_info("end_client", client_id, len(_clients))
     return ws
 
 
+# server to gate
 async def _proto_handler(request):
     bs = await request.read()
     data = utility.loads(bs)
-    client_ids, path, body = data
+    client_ids, proto_id, body = data
     if not client_ids:
         # broadcast
         client_ids = _clients.keys()
     try:
         msg_object = {
-            "path": path,
+            "id": proto_id,
             "body": body,
             "time": time.time(),
         }
         msg = json.dumps(msg_object)
     except Exception as e:
         s = traceback.format_exc()
-        log_error("proto_dump_error", client_ids, path, body, e, s)
+        log_error("proto_dump_error", client_ids, proto_id, body, e, s)
         return
     for client_id in client_ids:
         client_obj = _clients.get(client_id)
@@ -181,7 +184,7 @@ async def _proto_handler(request):
             q.put_nowait(msg)            
         except Exception as e:
             s = traceback.format_exc()
-            log_error("proto_handler_error", client_id, path, body, e, s)
+            log_error("proto_handler_error", client_id, proto_id, body, e, s)
     return utility.pack_pickle_response('')
 
 
