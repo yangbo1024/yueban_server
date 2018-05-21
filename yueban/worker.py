@@ -16,10 +16,10 @@ _web_app = None
 
 
 class ProtocolMessage(object):
-    def __init__(self, gate_id, client_id, path, body):
+    def __init__(self, gate_id, client_id, proto_id, body):
         self.gate_id = gate_id
         self.client_id = client_id
-        self.path = path
+        self.proto_id = proto_id
         self.body = body
         self._client_info = None
 
@@ -39,8 +39,8 @@ class ProtocolMessage(object):
         return self._client_info
 
     def __str__(self):
-        return 'ProtocolMessage(gate_id={0},client_id={1},path={2},body={3}'.format(
-            self.gate_id, self.client_id, self.path, self.body
+        return 'ProtocolMessage(gate_id={0},client_id={1},proto_id={2},body={3}'.format(
+            self.gate_id, self.client_id, self.proto_id, self.body
         )
 
 
