@@ -52,12 +52,12 @@ dig:
 from . import config
 
 
-__version__ = '2.3.7'
+__version__ = "2.3.8"
 
 
 async def initialize(cfg):
     config.set_config(cfg)
 
 
-async def initialize_with_file(file_path='yueban.conf'):
+async def initialize_with_file(file_path="yueban.conf"):
     config.load_config(file_path)
