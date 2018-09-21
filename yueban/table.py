@@ -36,7 +36,7 @@ def _load_table_data(path):
                 for header in row:
                     headers.append(header)
             else:
-                if not row[0]:
+                if row[0] is None:
                     break
                 row_data = {}
                 for j, col in enumerate(row):

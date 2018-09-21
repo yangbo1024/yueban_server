@@ -10,7 +10,6 @@ import pymongo
 
 
 _db_conn = None
-_readonly_conn = None
 
 
 async def create_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):

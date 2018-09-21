@@ -17,7 +17,7 @@ dig:
                     |
           [...worker1,worker2...]   <---->   outer_http_request
                 /         \
-               /          \
+               /           \
         [redis_cache]     [mongodb_storage]
 
 
@@ -52,7 +52,7 @@ dig:
 from . import config
 
 
-__version__ = "2.4.0"
+__version__ = "2.4.2"
 
 
 async def initialize(cfg):
