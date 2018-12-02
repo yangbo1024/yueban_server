@@ -4,5 +4,5 @@ aioredis
 cchardet
 gunicorn
 lz4
-motor
+motor==1.2.1
 uvloop
