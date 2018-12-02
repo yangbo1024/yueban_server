@@ -25,6 +25,7 @@ CLASSIFIERS = [
 
 
 def _read_lines(file_name):
+    import pathlib
     with open(file_name) as f:
         return f.readlines()
 
