@@ -119,5 +119,6 @@ class Lock(object):
         if used_time >= 1.0:
             import traceback
             from . import utility
-            s = traceback.format_exc()
-            utility.print_out("slow_lock", self.lock_key, s)
+            el = traceback.format_exception(exc_type, exc, tb)
+            es = "".join(el)
+            utility.print_out("slow_lock", self.lock_key, es)
