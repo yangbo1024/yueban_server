@@ -117,8 +117,4 @@ class Lock(object):
                 await _redis_pool.delete(self.lock_key)
         used_time = time.time() - self.begin_time
         if used_time >= 1.0:
-            import traceback
-            from . import utility
-            el = traceback.format_exception(exc_type, exc, tb)
-            es = "".join(el)
-            utility.print_out("slow_lock", self.lock_key, es)
+            utility.print_out("slow_lock", self.lock_key, used_time)
