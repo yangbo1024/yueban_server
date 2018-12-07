@@ -6,6 +6,7 @@ redis访问
 
 import aioredis
 from . import config
+import time
 
 
 _redis_pool = None
@@ -82,6 +83,7 @@ class Lock(object):
         self.timeout = max(0.02, timeout)
         self.interval = max(0.001, interval)
         self.lua_valid = lua_valid
+        self.begin_time = time.time()
 
     async def __aenter__(self):
         import asyncio
@@ -113,3 +115,10 @@ class Lock(object):
             locked_id = await _redis_pool.get(self.lock_key)
             if locked_id == self.lock_id:
                 await _redis_pool.delete(self.lock_key)
+        used_time = time.time() - self.begin_time
+        if used_time >= 1.0:
+            import traceback
+            from . import utility
+            el = traceback.format_exception(exc_type, exc, tb)
+            es = "".join(el)
+            utility.print_out("slow_lock", self.lock_key, es)
