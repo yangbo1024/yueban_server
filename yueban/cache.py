@@ -68,14 +68,14 @@ class Lock(object):
                 print(lock.lock_id)
     """
     UNLOCK_SCRIPT = """
-    if redis.call("get", KEYS[1]) == ARGV[2] then
+    if redis.call("get", KEYS[1]) == ARGV[1] then
         return redis.call("del", KEYS[1])
     else
         return 0
     end
     """
 
-    def __init__(self, lock_name, timeout=5.0, interval=0.01, lua_valid=False):
+    def __init__(self, lock_name, timeout=5.0, interval=0.01, lua_valid=True):
         # 很大一部分云服务提供商的redis不支持lua，所以默认不采用lua辅助实现
         from . import utility
         self.lock_key = make_key(SYS_KEY_PREFIX, lock_name)
@@ -92,7 +92,7 @@ class Lock(object):
         p_interval = int(self.interval * 1000)
         p_sum_time = 0
         while p_sum_time < p_timeout:
-            ok = await _redis_pool.set(self.lock_key, self.lock_id, pexpire=p_interval, exist=nx)
+            ok = await _redis_pool.set(self.lock_key, self.lock_id, pexpire=p_timeout, exist=nx)
             if not ok:
                 await asyncio.sleep(self.interval)
                 p_sum_time += p_interval
