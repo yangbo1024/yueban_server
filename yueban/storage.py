@@ -14,8 +14,9 @@ _db_conn = None
 
 async def create_connection(host, port, database, user, password, replicaset='', min_pool_size=1, max_pool_size=5):
     client = motor_asyncio.AsyncIOMotorClient(host, port, replicaset=replicaset, minPoolSize=min_pool_size, maxPoolSize=max_pool_size)
-    db = client[database]
+    db = client['admin']
     await db.authenticate(user, password)
+    db = client[database]
     return db
 
 
