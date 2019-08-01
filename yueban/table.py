@@ -65,7 +65,7 @@ def update_table(table_name):
         _cached_tables.pop(table_name)
 
 
-def get_table(table_name, clone=True):
+def get_table(table_name, clone=False):
     """
     获取整个表数据
     :param table_name:
@@ -76,7 +76,7 @@ def get_table(table_name, clone=True):
     return copy.deepcopy(data) if clone else data
 
 
-def get_rows(table_name, index_name, index_value, clone=True):
+def get_rows(table_name, index_name, index_value, clone=False):
     """
     获取能够匹配的所有行
     :param table_name:
